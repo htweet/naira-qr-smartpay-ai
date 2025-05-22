@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -228,7 +227,7 @@ const RevenueModel = ({ merchant }: RevenueModelProps) => {
                   <div className="space-y-3">
                     <div>
                       <p className="text-2xl font-bold text-green-600">
-                        ₦{(stream.amount / 1000000).toFixed(1)}M
+                        ₦{(Number(stream.amount) / 1000000).toFixed(1)}M
                       </p>
                       <p className="text-sm text-gray-600">{stream.percentage}% of total</p>
                     </div>
@@ -238,7 +237,7 @@ const RevenueModel = ({ merchant }: RevenueModelProps) => {
                         <p className="text-gray-600">Volume</p>
                         <p className="font-medium">
                           {stream.monthlyTransactions ? 
-                            `${(stream.monthlyTransactions / 1000000).toFixed(1)}M txns` :
+                            `${(Number(stream.monthlyTransactions) / 1000000).toFixed(1)}M txns` :
                             stream.activeSubscribers ? 
                             `${stream.activeSubscribers.toLocaleString()} subs` :
                             stream.premiumUsers ?
@@ -272,7 +271,7 @@ const RevenueModel = ({ merchant }: RevenueModelProps) => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`₦${(value / 1000000).toFixed(1)}M`, "Revenue"]} />
+                  <Tooltip formatter={(value) => [`₦${(Number(value) / 1000000).toFixed(1)}M`, "Revenue"]} />
                   <Legend />
                   <Area type="monotone" dataKey="fees" stackId="1" stroke="#8884d8" fill="#8884d8" name="Transaction Fees" />
                   <Area type="monotone" dataKey="subs" stackId="1" stroke="#82ca9d" fill="#82ca9d" name="Subscriptions" />
@@ -317,7 +316,7 @@ const RevenueModel = ({ merchant }: RevenueModelProps) => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Monthly Revenue</p>
-                        <p className="font-bold text-green-600">₦{(plan.revenue / 1000000).toFixed(1)}M</p>
+                        <p className="font-bold text-green-600">₦{(Number(plan.revenue) / 1000000).toFixed(1)}M</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">Churn Rate</p>
@@ -366,7 +365,7 @@ const RevenueModel = ({ merchant }: RevenueModelProps) => {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`₦${(value / 1000000).toFixed(1)}M`, "Revenue"]} />
+                    <Tooltip formatter={(value) => [`₦${(Number(value) / 1000000).toFixed(1)}M`, "Revenue"]} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               </CardContent>
