@@ -148,10 +148,11 @@ const Footer = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <CreditCard className="h-5 w-5 text-gray-400" title="Secure Payments" />
-            <Shield className="h-5 w-5 text-gray-400" title="Data Protection" />
-            <Clock className="h-5 w-5 text-gray-400" title="24/7 Support" />
-            <HelpCircle className="h-5 w-5 text-gray-400" title="Help Center" />
+            {/* Replace 'title' prop with aria-label for accessibility */}
+            <CreditCard className="h-5 w-5 text-gray-400" aria-label="Secure Payments" />
+            <Shield className="h-5 w-5 text-gray-400" aria-label="Data Protection" />
+            <Clock className="h-5 w-5 text-gray-400" aria-label="24/7 Support" />
+            <HelpCircle className="h-5 w-5 text-gray-400" aria-label="Help Center" />
           </div>
         </div>
 
