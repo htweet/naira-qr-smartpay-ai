@@ -9,24 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles } from "lucide-react";
-import { useGatewayConfigs } from "@/hooks/useGatewayConfigs";
 
 interface QRConfigFormProps {
   qrConfig: any;
   setQrConfig: (config: any) => void;
-  onGenerate: (selectedGateway?: string) => void;
+  onGenerate: () => void;
 }
 
 const QRConfigForm = ({ qrConfig, setQrConfig, onGenerate }: QRConfigFormProps) => {
-  const { configs } = useGatewayConfigs();
-  const [selectedGateway, setSelectedGateway] = useState<string>("");
-
-  const enabledGateways = configs.filter(config => config.enabled);
-
-  const handleGenerate = () => {
-    onGenerate(selectedGateway || undefined);
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -64,31 +54,6 @@ const QRConfigForm = ({ qrConfig, setQrConfig, onGenerate }: QRConfigFormProps) 
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="gateway">Payment Gateway (Optional)</Label>
-                <Select 
-                  value={selectedGateway} 
-                  onValueChange={setSelectedGateway}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Auto-select from enabled gateways" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Auto-select</SelectItem>
-                    {enabledGateways.map((gateway) => (
-                      <SelectItem key={gateway.gateway_id} value={gateway.gateway_id}>
-                        {gateway.gateway_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {enabledGateways.length === 0 && (
-                  <p className="text-sm text-yellow-600 mt-1">
-                    No payment gateways enabled. Enable at least one gateway for payments.
-                  </p>
-                )}
               </div>
 
               {qrConfig.type === "dynamic" && (
@@ -195,7 +160,7 @@ const QRConfigForm = ({ qrConfig, setQrConfig, onGenerate }: QRConfigFormProps) 
           </TabsContent>
         </Tabs>
 
-        <Button onClick={handleGenerate} className="w-full mt-6">
+        <Button onClick={onGenerate} className="w-full mt-6">
           <Sparkles className="h-4 w-4 mr-2" />
           Generate QR Code
         </Button>

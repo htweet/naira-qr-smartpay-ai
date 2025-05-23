@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,45 +19,40 @@ interface GatewaySettingsProps {
 
 const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
   const [settings, setSettings] = useState({
-    max_retries: gateway.maxRetries || 3,
-    timeout_seconds: gateway.timeout || 30,
+    maxRetries: gateway.maxRetries || 3,
+    timeout: gateway.timeout || 30,
     priority: gateway.priority || 1,
-    fallback_enabled: gateway.fallbackEnabled || true,
-    webhook_validation: gateway.webhookValidation || true,
-    auto_reconciliation: gateway.autoReconciliation || false,
-    fraud_detection: gateway.fraudDetection || true,
-    custom_headers: gateway.customHeaders ? JSON.parse(gateway.customHeaders) : {},
-    rate_limit: gateway.rateLimit || 1000,
+    fallbackEnabled: gateway.fallbackEnabled || true,
+    webhookValidation: gateway.webhookValidation || true,
+    autoReconciliation: gateway.autoReconciliation || false,
+    fraudDetection: gateway.fraudDetection || true,
+    customHeaders: gateway.customHeaders || "",
+    rateLimit: gateway.rateLimit || 1000,
     environment: gateway.environment || "live"
   });
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSaveSettings = async () => {
-    try {
-      await onUpdate(gateway.id, settings);
-      setIsOpen(false);
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const handleSaveSettings = () => {
+    onUpdate(gateway.id, settings);
+    setIsOpen(false);
+    toast({
+      title: "Settings Updated",
+      description: `${gateway.name} configuration has been updated successfully.`,
+    });
   };
 
   const resetToDefaults = () => {
     setSettings({
-      max_retries: 3,
-      timeout_seconds: 30,
+      maxRetries: 3,
+      timeout: 30,
       priority: 1,
-      fallback_enabled: true,
-      webhook_validation: true,
-      auto_reconciliation: false,
-      fraud_detection: true,
-      custom_headers: {},
-      rate_limit: 1000,
+      fallbackEnabled: true,
+      webhookValidation: true,
+      autoReconciliation: false,
+      fraudDetection: true,
+      customHeaders: "",
+      rateLimit: 1000,
       environment: "live"
     });
   };
@@ -94,8 +90,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                     type="number"
                     min="1"
                     max="10"
-                    value={settings.max_retries}
-                    onChange={(e) => setSettings({...settings, max_retries: parseInt(e.target.value)})}
+                    value={settings.maxRetries}
+                    onChange={(e) => setSettings({...settings, maxRetries: parseInt(e.target.value)})}
                   />
                 </div>
                 <div>
@@ -105,8 +101,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                     type="number"
                     min="5"
                     max="120"
-                    value={settings.timeout_seconds}
-                    onChange={(e) => setSettings({...settings, timeout_seconds: parseInt(e.target.value)})}
+                    value={settings.timeout}
+                    onChange={(e) => setSettings({...settings, timeout: parseInt(e.target.value)})}
                   />
                 </div>
               </div>
@@ -148,11 +144,11 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <Label>Rate Limit (transactions/hour)</Label>
-                  <Badge variant="outline">{settings.rate_limit}</Badge>
+                  <Badge variant="outline">{settings.rateLimit}</Badge>
                 </div>
                 <Slider
-                  value={[settings.rate_limit]}
-                  onValueChange={(value) => setSettings({...settings, rate_limit: value[0]})}
+                  value={[settings.rateLimit]}
+                  onValueChange={(value) => setSettings({...settings, rateLimit: value[0]})}
                   max={5000}
                   min={100}
                   step={100}
@@ -175,8 +171,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                 </div>
                 <Switch
                   id="fallbackEnabled"
-                  checked={settings.fallback_enabled}
-                  onCheckedChange={(checked) => setSettings({...settings, fallback_enabled: checked})}
+                  checked={settings.fallbackEnabled}
+                  onCheckedChange={(checked) => setSettings({...settings, fallbackEnabled: checked})}
                 />
               </div>
 
@@ -187,8 +183,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                 </div>
                 <Switch
                   id="webhookValidation"
-                  checked={settings.webhook_validation}
-                  onCheckedChange={(checked) => setSettings({...settings, webhook_validation: checked})}
+                  checked={settings.webhookValidation}
+                  onCheckedChange={(checked) => setSettings({...settings, webhookValidation: checked})}
                 />
               </div>
 
@@ -199,8 +195,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                 </div>
                 <Switch
                   id="autoReconciliation"
-                  checked={settings.auto_reconciliation}
-                  onCheckedChange={(checked) => setSettings({...settings, auto_reconciliation: checked})}
+                  checked={settings.autoReconciliation}
+                  onCheckedChange={(checked) => setSettings({...settings, autoReconciliation: checked})}
                 />
               </div>
 
@@ -211,8 +207,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                 </div>
                 <Switch
                   id="fraudDetection"
-                  checked={settings.fraud_detection}
-                  onCheckedChange={(checked) => setSettings({...settings, fraud_detection: checked})}
+                  checked={settings.fraudDetection}
+                  onCheckedChange={(checked) => setSettings({...settings, fraudDetection: checked})}
                 />
               </div>
             </CardContent>
@@ -231,15 +227,8 @@ const GatewaySettings = ({ gateway, onUpdate }: GatewaySettingsProps) => {
                   className="w-full mt-1 p-2 border rounded-md"
                   rows={4}
                   placeholder='{"X-Custom-Header": "value", "Authorization": "Bearer token"}'
-                  value={JSON.stringify(settings.custom_headers, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setSettings({...settings, custom_headers: parsed});
-                    } catch {
-                      // Invalid JSON, keep the text value for now
-                    }
-                  }}
+                  value={settings.customHeaders}
+                  onChange={(e) => setSettings({...settings, customHeaders: e.target.value})}
                 />
                 <p className="text-sm text-gray-500 mt-1">Additional headers to send with API requests</p>
               </div>
