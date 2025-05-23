@@ -2,119 +2,67 @@
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Camera, CameraOff, Scan, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
+import { Camera, Upload, Scan } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface QRScannerProps {
-  onPaymentInitiated?: (paymentData: any) => void;
-}
-
-const QRScanner = ({ onPaymentInitiated }: QRScannerProps) => {
+const QRScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
-  const [scannedData, setScannedData] = useState<any>(null);
-  const [paymentDialog, setPaymentDialog] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [processing, setProcessing] = useState(false);
+  const [scannedData, setScannedData] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const startScanning = async () => {
+  const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
       });
-      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsScanning(true);
       }
     } catch (error) {
+      console.error('Error accessing camera:', error);
       toast({
-        title: "Camera Access Denied",
-        description: "Please allow camera access to scan QR codes.",
-        variant: "destructive",
+        title: "Camera Error",
+        description: "Unable to access camera. Please check permissions.",
+        variant: "destructive"
       });
     }
   };
 
-  const stopScanning = () => {
+  const stopCamera = () => {
     if (videoRef.current?.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
-    }
-    setIsScanning(false);
-  };
-
-  const simulateQRDetection = () => {
-    // Simulate QR code detection for demo purposes
-    const mockQRData = {
-      merchantId: "MERCHANT_12345",
-      merchantName: "Demo Store",
-      paymentType: "dynamic",
-      amount: 15000,
-      currency: "NGN",
-      description: "Product Purchase",
-      reference: "PAY_" + Date.now(),
-      gateway: "moniepoint"
-    };
-    
-    setScannedData(mockQRData);
-    setPaymentDialog(true);
-    stopScanning();
-    
-    if (mockQRData.paymentType === "static") {
-      // For static QR codes, customer enters amount
-      setPaymentAmount("");
-    } else {
-      // For dynamic QR codes, amount is pre-filled
-      setPaymentAmount(mockQRData.amount.toString());
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      setIsScanning(false);
     }
   };
 
-  const processPayment = async () => {
-    setProcessing(true);
-    
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const paymentResult = {
-        ...scannedData,
-        amount: parseInt(paymentAmount),
-        status: "success",
-        transactionId: "TXN_" + Date.now(),
-        timestamp: new Date().toISOString()
-      };
-
-      onPaymentInitiated?.(paymentResult);
-      
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Mock QR code detection from uploaded image
+      setScannedData(`QR-${Math.random().toString(36).substr(2, 9)}`);
       toast({
-        title: "Payment Successful",
-        description: `₦${parseInt(paymentAmount).toLocaleString()} paid to ${scannedData.merchantName}`,
+        title: "QR Code Detected",
+        description: "QR code found in uploaded image",
       });
-      
-      setPaymentDialog(false);
-      setScannedData(null);
-      setPaymentAmount("");
-      
-    } catch (error) {
-      toast({
-        title: "Payment Failed",
-        description: "Unable to process payment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setProcessing(false);
     }
+  };
+
+  const mockScanResult = () => {
+    // Simulate scanning a QR code
+    const mockData = `https://pay.payqr.ng/QR${Math.floor(Math.random() * 100).toString().padStart(3, '0')}`;
+    setScannedData(mockData);
+    toast({
+      title: "QR Code Scanned",
+      description: "Payment QR code detected successfully",
+    });
   };
 
   useEffect(() => {
     return () => {
-      stopScanning();
+      stopCamera();
     };
   }, []);
 
@@ -127,168 +75,123 @@ const QRScanner = ({ onPaymentInitiated }: QRScannerProps) => {
             QR Code Scanner
           </CardTitle>
           <CardDescription>
-            Scan merchant QR codes to make instant payments
+            Scan QR codes to make payments quickly and securely
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="relative">
-            {isScanning ? (
-              <div className="relative">
+          {/* Camera View */}
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden relative">
+              {isScanning ? (
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  className="w-full h-64 bg-black rounded-lg"
+                  className="w-full h-full object-cover"
                 />
-                <canvas
-                  ref={canvasRef}
-                  className="absolute top-0 left-0 w-full h-full"
-                  style={{ display: 'none' }}
-                />
-                <div className="absolute inset-0 border-2 border-dashed border-white/50 rounded-lg pointer-events-none">
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-48 h-48 border-2 border-blue-500 rounded-lg relative">
-                      <div className="absolute top-0 left-0 w-6 h-6 border-l-4 border-t-4 border-blue-500"></div>
-                      <div className="absolute top-0 right-0 w-6 h-6 border-r-4 border-t-4 border-blue-500"></div>
-                      <div className="absolute bottom-0 left-0 w-6 h-6 border-l-4 border-b-4 border-blue-500"></div>
-                      <div className="absolute bottom-0 right-0 w-6 h-6 border-r-4 border-b-4 border-blue-500"></div>
-                    </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <Camera className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Camera preview will appear here</p>
                   </div>
                 </div>
-                
-                {/* Demo button for testing */}
-                <Button
-                  onClick={simulateQRDetection}
-                  className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 hover:bg-green-700"
-                >
-                  Simulate QR Detection
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-64 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                <Camera className="h-16 w-16 text-gray-400 mb-4" />
-                <p className="text-gray-600 mb-4">Position QR code within the frame</p>
-                <Button onClick={startScanning} className="flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
+              )}
+              
+              {/* Scanning overlay */}
+              {isScanning && (
+                <div className="absolute inset-4 border-2 border-blue-500 rounded-lg">
+                  <div className="absolute inset-0 border border-blue-300 rounded-lg animate-pulse" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2">
+              {!isScanning ? (
+                <Button onClick={startCamera} className="flex-1">
+                  <Camera className="h-4 w-4 mr-2" />
                   Start Camera
                 </Button>
-              </div>
-            )}
-          </div>
-
-          {isScanning && (
-            <div className="flex justify-center">
-              <Button onClick={stopScanning} variant="outline">
-                <CameraOff className="h-4 w-4 mr-2" />
-                Stop Scanning
-              </Button>
+              ) : (
+                <>
+                  <Button onClick={stopCamera} variant="outline" className="flex-1">
+                    Stop Camera
+                  </Button>
+                  <Button onClick={mockScanResult} className="flex-1">
+                    <Scan className="h-4 w-4 mr-2" />
+                    Scan QR
+                  </Button>
+                </>
+              )}
             </div>
-          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="font-medium">Secure</span>
-              </div>
-              <p className="text-sm text-gray-600">End-to-end encrypted payments</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Scan className="h-4 w-4 text-blue-500" />
-                <span className="font-medium">Instant</span>
-              </div>
-              <p className="text-sm text-gray-600">Real-time payment processing</p>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <CreditCard className="h-4 w-4 text-purple-500" />
-                <span className="font-medium">Universal</span>
-              </div>
-              <p className="text-sm text-gray-600">Works with all major banks</p>
-            </Card>
+            <div className="text-center">
+              <span className="text-sm text-gray-500">or</span>
+            </div>
+
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="qr-upload"
+              />
+              <label htmlFor="qr-upload">
+                <Button variant="outline" className="w-full" asChild>
+                  <span>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Image
+                  </span>
+                </Button>
+              </label>
+            </div>
           </div>
+
+          {/* Scanned Result */}
+          {scannedData && (
+            <Card className="mt-4">
+              <CardContent className="pt-4">
+                <h4 className="font-semibold mb-2">Scanned QR Code:</h4>
+                <p className="text-sm bg-gray-100 p-2 rounded break-all">{scannedData}</p>
+                <Button className="w-full mt-3">
+                  Proceed to Payment
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
 
-      {/* Payment Confirmation Dialog */}
-      <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Payment</DialogTitle>
-            <DialogDescription>
-              Review payment details before proceeding
-            </DialogDescription>
-          </DialogHeader>
-
-          {scannedData && (
-            <div className="space-y-4">
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Merchant</span>
-                  <span>{scannedData.merchantName}</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Description</span>
-                  <span>{scannedData.description}</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">Payment Type</span>
-                  <Badge variant={scannedData.paymentType === "dynamic" ? "default" : "secondary"}>
-                    {scannedData.paymentType}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Gateway</span>
-                  <span className="capitalize">{scannedData.gateway}</span>
-                </div>
-              </Card>
-
-              <div>
-                <Label htmlFor="paymentAmount">Amount (₦)</Label>
-                <Input
-                  id="paymentAmount"
-                  type="number"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  disabled={scannedData.paymentType === "dynamic"}
-                  placeholder="Enter amount"
-                />
-                {scannedData.paymentType === "dynamic" && (
-                  <p className="text-sm text-gray-500 mt-1">Amount is fixed for this QR code</p>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setPaymentDialog(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={processPayment}
-                  disabled={!paymentAmount || processing}
-                  className="flex-1"
-                >
-                  {processing ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Pay ₦{paymentAmount ? parseInt(paymentAmount).toLocaleString() : '0'}
-                    </>
-                  )}
-                </Button>
-              </div>
+      {/* Instructions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">How to Scan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">1</div>
+              <p>Start the camera and point it at the QR code</p>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">2</div>
+              <p>Ensure the QR code is within the scanning area</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">3</div>
+              <p>Wait for automatic detection or tap "Scan QR"</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">4</div>
+              <p>Review payment details and proceed</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
