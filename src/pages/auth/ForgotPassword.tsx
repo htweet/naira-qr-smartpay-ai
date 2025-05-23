@@ -17,6 +17,15 @@ const ForgotPassword = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -32,9 +41,34 @@ const ForgotPassword = () => {
         description: "Check your email for the password reset link.",
       });
     } catch (error: any) {
+      console.error("Password reset error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to send reset email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email resent!",
+        description: "Please check your email for the password reset link.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend email. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -43,45 +77,52 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border-white/20">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
             <QrCode className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl text-white">Reset Password</CardTitle>
-          <CardDescription className="text-gray-300">
+          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <CardDescription>
             {sent ? "Check your email" : "Enter your email to reset your password"}
           </CardDescription>
         </CardHeader>
 
         {sent ? (
           <CardContent className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-              <Mail className="h-8 w-8 text-green-400" />
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <Mail className="h-8 w-8 text-green-600" />
             </div>
             <div className="space-y-2">
-              <p className="text-white font-medium">Email sent successfully!</p>
-              <p className="text-gray-300 text-sm">
+              <p className="font-medium">Email sent successfully!</p>
+              <p className="text-gray-600 text-sm">
                 We've sent a password reset link to <strong>{email}</strong>
               </p>
-              <p className="text-gray-400 text-xs">
-                Didn't receive the email? Check your spam folder or try again.
+              <p className="text-gray-500 text-xs">
+                Didn't receive the email? Check your spam folder or click resend below.
               </p>
             </div>
+            <Button 
+              variant="outline" 
+              onClick={handleResend}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? "Sending..." : "Resend Email"}
+            </Button>
           </CardContent>
         ) : (
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">Email Address</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input 
                   id="email" 
                   type="email" 
                   placeholder="Enter your email address" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   required
                 />
               </div>
@@ -101,7 +142,7 @@ const ForgotPassword = () => {
         <CardFooter>
           <Button 
             variant="ghost" 
-            className="w-full text-gray-300 hover:bg-white/10"
+            className="w-full"
             onClick={() => navigate("/signin")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

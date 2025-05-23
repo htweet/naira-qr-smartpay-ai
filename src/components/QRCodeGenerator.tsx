@@ -1,9 +1,8 @@
 
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import QRConfigForm from "@/components/qr/QRConfigForm";
-import QRPreview from "@/components/qr/QRPreview";
-import QRList from "@/components/qr/QRList";
+import QRGenerator from "@/components/qr/QRGenerator";
+import QRHistory from "@/components/qr/QRHistory";
 
 interface QRCodeGeneratorProps {
   merchant: any;
@@ -68,15 +67,12 @@ const QRCodeGenerator = ({ merchant }: QRCodeGeneratorProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QRConfigForm 
-          qrConfig={qrConfig}
-          setQrConfig={setQrConfig}
-          onGenerate={generateQRCode}
-        />
-        <QRPreview qrConfig={qrConfig} />
-      </div>
-      <QRList generatedQRs={generatedQRs} />
+      <QRGenerator 
+        qrConfig={qrConfig}
+        setQrConfig={setQrConfig}
+        onGenerate={generateQRCode}
+      />
+      <QRHistory generatedQRs={generatedQRs} />
     </div>
   );
 };

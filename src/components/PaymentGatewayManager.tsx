@@ -1,10 +1,6 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, TrendingUp, Clock, DollarSign } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import GatewayOverview from "@/components/gateway/GatewayOverview";
-import GatewayDetails from "@/components/gateway/GatewayDetails";
+import GatewayManager from "@/components/gateway/GatewayManager";
 
 interface PaymentGatewayManagerProps {
   merchant: any;
@@ -134,68 +130,14 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
     ));
   };
 
-  const activeGateway = gateways.find(g => g.id === selectedGateway);
-
   return (
-    <div className="space-y-6">
-      <GatewayOverview 
-        gateways={gateways}
-        onToggleGateway={toggleGateway}
-        onSelectGateway={setSelectedGateway}
-      />
-
-      <Tabs value={selectedGateway} onValueChange={setSelectedGateway}>
-        <TabsList className="grid w-full grid-cols-3">
-          {gateways.map((gateway) => (
-            <TabsTrigger key={gateway.id} value={gateway.id}>
-              {gateway.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {gateways.map((gateway) => (
-          <TabsContent key={gateway.id} value={gateway.id} className="space-y-6">
-            <GatewayDetails 
-              gateway={gateway}
-              onToggleGateway={toggleGateway}
-              onUpdateSettings={updateGatewaySettings}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {/* Smart Routing Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-yellow-500" />
-            Smart Payment Routing
-          </CardTitle>
-          <CardDescription>
-            AI-powered routing optimizes success rates by automatically selecting the best gateway
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg">
-              <TrendingUp className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-              <p className="font-bold text-2xl">+15.2%</p>
-              <p className="text-sm text-gray-600">Success Rate Improvement</p>
-            </div>
-            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-blue-50 rounded-lg">
-              <Clock className="h-8 w-8 text-green-500 mx-auto mb-2" />
-              <p className="font-bold text-2xl">-1.3s</p>
-              <p className="text-sm text-gray-600">Faster Processing</p>
-            </div>
-            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
-              <DollarSign className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-              <p className="font-bold text-2xl">-8.5%</p>
-              <p className="text-sm text-gray-600">Lower Fees</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <GatewayManager
+      gateways={gateways}
+      selectedGateway={selectedGateway}
+      onToggleGateway={toggleGateway}
+      onSelectGateway={setSelectedGateway}
+      onUpdateSettings={updateGatewaySettings}
+    />
   );
 };
 
