@@ -18,6 +18,8 @@ import {
   Zap
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import GatewaySettings from "@/components/payment/GatewaySettings";
+import { toast } from "@/hooks/use-toast";
 
 interface PaymentGatewayManagerProps {
   merchant: any;
@@ -37,6 +39,16 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
       monthlyCount: 847,
       lastTransaction: "2 minutes ago",
       features: ["Virtual Accounts", "Bank Transfer", "Card Payments", "Customer Verification"],
+      maxRetries: 3,
+      timeout: 30,
+      priority: 1,
+      fallbackEnabled: true,
+      webhookValidation: true,
+      autoReconciliation: false,
+      fraudDetection: true,
+      customHeaders: "",
+      rateLimit: 1000,
+      environment: "live",
       performance: [
         { date: "Mon", success: 98, volume: 180000 },
         { date: "Tue", success: 99, volume: 195000 },
@@ -59,6 +71,16 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
       monthlyCount: 623,
       lastTransaction: "5 minutes ago",
       features: ["3DS Card Payment", "E-Wallet", "Bank Debit", "Mobile SDKs"],
+      maxRetries: 2,
+      timeout: 25,
+      priority: 2,
+      fallbackEnabled: true,
+      webhookValidation: true,
+      autoReconciliation: true,
+      fraudDetection: true,
+      customHeaders: "",
+      rateLimit: 800,
+      environment: "live",
       performance: [
         { date: "Mon", success: 96, volume: 140000 },
         { date: "Tue", success: 98, volume: 155000 },
@@ -81,6 +103,16 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
       monthlyCount: 298,
       lastTransaction: "1 hour ago",
       features: ["Zero-fee Transfers", "Business Tools", "POS Integration", "Bulk Payments"],
+      maxRetries: 4,
+      timeout: 35,
+      priority: 3,
+      fallbackEnabled: false,
+      webhookValidation: false,
+      autoReconciliation: false,
+      fraudDetection: false,
+      customHeaders: "",
+      rateLimit: 500,
+      environment: "sandbox",
       performance: [
         { date: "Mon", success: 95, volume: 65000 },
         { date: "Tue", success: 97, volume: 72000 },
@@ -96,9 +128,23 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
   const [selectedGateway, setSelectedGateway] = useState("moniepoint");
 
   const toggleGateway = (gatewayId: string) => {
+    setGateways(gateways.map(gateway => {
+      if (gateway.id === gatewayId) {
+        const newEnabled = !gateway.enabled;
+        toast({
+          title: `${gateway.name} ${newEnabled ? 'Enabled' : 'Disabled'}`,
+          description: `Payment gateway has been ${newEnabled ? 'activated' : 'deactivated'} successfully.`,
+        });
+        return { ...gateway, enabled: newEnabled };
+      }
+      return gateway;
+    }));
+  };
+
+  const updateGatewaySettings = (gatewayId: string, settings: any) => {
     setGateways(gateways.map(gateway => 
       gateway.id === gatewayId 
-        ? { ...gateway, enabled: !gateway.enabled }
+        ? { ...gateway, ...settings }
         : gateway
     ));
   };
@@ -299,10 +345,21 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
+                      <p className="font-medium">Gateway Status</p>
+                      <p className="text-sm text-gray-600">Enable/disable gateway for processing</p>
+                    </div>
+                    <Switch 
+                      checked={gateway.enabled} 
+                      onCheckedChange={() => toggleGateway(gateway.id)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
                       <p className="font-medium">Auto-Retry Failed Payments</p>
                       <p className="text-sm text-gray-600">Automatically retry failed transactions</p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch checked={gateway.fallbackEnabled} />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -310,7 +367,7 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
                       <p className="font-medium">Webhook Notifications</p>
                       <p className="text-sm text-gray-600">Real-time payment status updates</p>
                     </div>
-                    <Switch defaultChecked />
+                    <Switch checked={gateway.webhookValidation} />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -321,10 +378,10 @@ const PaymentGatewayManager = ({ merchant }: PaymentGatewayManagerProps) => {
                     <Switch checked={gateway.enabled} />
                   </div>
 
-                  <Button className="w-full" variant="outline">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Advanced Settings
-                  </Button>
+                  <GatewaySettings 
+                    gateway={gateway} 
+                    onUpdate={updateGatewaySettings}
+                  />
                 </CardContent>
               </Card>
             </div>
