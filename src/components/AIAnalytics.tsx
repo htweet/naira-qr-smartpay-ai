@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,10 @@ import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPi
 
 interface AIAnalyticsProps {
   merchant: any;
+  userType?: 'merchant' | 'customer';
 }
 
-const AIAnalytics = ({ merchant }: AIAnalyticsProps) => {
+const AIAnalytics = ({ merchant, userType = 'merchant' }: AIAnalyticsProps) => {
   const [aiInsights, setAiInsights] = useState<any>(null);
   const [selectedTimeframe, setSelectedTimeframe] = useState("30d");
 
