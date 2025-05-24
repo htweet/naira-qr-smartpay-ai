@@ -99,6 +99,138 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          api_credentials: Json | null
+          auto_reconciliation: boolean | null
+          created_at: string | null
+          custom_headers: Json | null
+          enabled: boolean | null
+          environment: string | null
+          fallback_enabled: boolean | null
+          fraud_detection: boolean | null
+          gateway_id: string
+          gateway_name: string
+          id: string
+          max_retries: number | null
+          priority: number | null
+          rate_limit: number | null
+          timeout_seconds: number | null
+          updated_at: string | null
+          user_id: string | null
+          webhook_validation: boolean | null
+        }
+        Insert: {
+          api_credentials?: Json | null
+          auto_reconciliation?: boolean | null
+          created_at?: string | null
+          custom_headers?: Json | null
+          enabled?: boolean | null
+          environment?: string | null
+          fallback_enabled?: boolean | null
+          fraud_detection?: boolean | null
+          gateway_id: string
+          gateway_name: string
+          id?: string
+          max_retries?: number | null
+          priority?: number | null
+          rate_limit?: number | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          webhook_validation?: boolean | null
+        }
+        Update: {
+          api_credentials?: Json | null
+          auto_reconciliation?: boolean | null
+          created_at?: string | null
+          custom_headers?: Json | null
+          enabled?: boolean | null
+          environment?: string | null
+          fallback_enabled?: boolean | null
+          fraud_detection?: boolean | null
+          gateway_id?: string
+          gateway_name?: string
+          id?: string
+          max_retries?: number | null
+          priority?: number | null
+          rate_limit?: number | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          webhook_validation?: boolean | null
+        }
+        Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          description: string | null
+          error_correction: string | null
+          eye_style: string | null
+          frame_style: string | null
+          gateway_id: string | null
+          id: string
+          logo_enabled: boolean | null
+          pattern: string | null
+          payments: number | null
+          primary_color: string | null
+          qr_code_id: string
+          reference: string | null
+          revenue: number | null
+          scans: number | null
+          secondary_color: string | null
+          type: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          error_correction?: string | null
+          eye_style?: string | null
+          frame_style?: string | null
+          gateway_id?: string | null
+          id?: string
+          logo_enabled?: boolean | null
+          pattern?: string | null
+          payments?: number | null
+          primary_color?: string | null
+          qr_code_id: string
+          reference?: string | null
+          revenue?: number | null
+          scans?: number | null
+          secondary_color?: string | null
+          type: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          description?: string | null
+          error_correction?: string | null
+          eye_style?: string | null
+          frame_style?: string | null
+          gateway_id?: string | null
+          id?: string
+          logo_enabled?: boolean | null
+          pattern?: string | null
+          payments?: number | null
+          primary_color?: string | null
+          qr_code_id?: string
+          reference?: string | null
+          revenue?: number | null
+          scans?: number | null
+          secondary_color?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       segment_memberships: {
         Row: {
           created_at: string
