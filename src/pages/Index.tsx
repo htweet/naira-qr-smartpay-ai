@@ -296,6 +296,9 @@ const Index = () => {
             </div>
           </section>
 
+          {/* Payment Gateway Section */}
+          <PaymentGatewaySection />
+
           {/* How It Works Section */}
           <section id="how-it-works" className="py-20 px-4">
             <div className="container mx-auto">

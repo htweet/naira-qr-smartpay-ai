@@ -69,14 +69,14 @@ const QRBasicSettings = ({ qrConfig, setQrConfig }: QRBasicSettingsProps) => {
       <div>
         <Label htmlFor="gateway">Payment Gateway</Label>
         <Select 
-          value={qrConfig.gateway_id || ""} 
+          value={qrConfig.gateway_id} 
           onValueChange={(value) => setQrConfig({...qrConfig, gateway_id: value})}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select payment gateway" />
+            <SelectValue placeholder="Select gateway" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="moniepoint">Moniepoint (Monnify)</SelectItem>
+            <SelectItem value="moniepoint">Moniepoint</SelectItem>
             <SelectItem value="opay">Opay</SelectItem>
             <SelectItem value="palmpay">Palmpay</SelectItem>
           </SelectContent>

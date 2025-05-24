@@ -13,6 +13,16 @@ interface GatewayDetailsProps {
 }
 
 const GatewayDetails = ({ gateway, onToggleGateway, onUpdateSettings }: GatewayDetailsProps) => {
+  const handleMainToggle = (checked: boolean) => {
+    console.log('Gateway details toggle:', gateway.id, checked);
+    onToggleGateway(gateway.id);
+  };
+
+  const handleFeatureToggle = (feature: string, checked: boolean) => {
+    console.log('Feature toggle:', feature, checked);
+    onUpdateSettings(gateway.id, { [feature]: checked });
+  };
+
   return (
     <div className="space-y-6">
       {/* Detailed Stats */}
@@ -130,7 +140,7 @@ const GatewayDetails = ({ gateway, onToggleGateway, onUpdateSettings }: GatewayD
               </div>
               <Switch 
                 checked={gateway.enabled} 
-                onCheckedChange={() => onToggleGateway(gateway.id)}
+                onCheckedChange={handleMainToggle}
               />
             </div>
 
@@ -139,7 +149,10 @@ const GatewayDetails = ({ gateway, onToggleGateway, onUpdateSettings }: GatewayD
                 <p className="font-medium">Auto-Retry Failed Payments</p>
                 <p className="text-sm text-gray-600">Automatically retry failed transactions</p>
               </div>
-              <Switch checked={gateway.fallbackEnabled} />
+              <Switch 
+                checked={gateway.fallbackEnabled} 
+                onCheckedChange={(checked) => handleFeatureToggle('fallbackEnabled', checked)}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -147,7 +160,10 @@ const GatewayDetails = ({ gateway, onToggleGateway, onUpdateSettings }: GatewayD
                 <p className="font-medium">Webhook Notifications</p>
                 <p className="text-sm text-gray-600">Real-time payment status updates</p>
               </div>
-              <Switch checked={gateway.webhookValidation} />
+              <Switch 
+                checked={gateway.webhookValidation} 
+                onCheckedChange={(checked) => handleFeatureToggle('webhookValidation', checked)}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -155,7 +171,10 @@ const GatewayDetails = ({ gateway, onToggleGateway, onUpdateSettings }: GatewayD
                 <p className="font-medium">Priority Routing</p>
                 <p className="text-sm text-gray-600">Prefer this gateway for new payments</p>
               </div>
-              <Switch checked={gateway.enabled} />
+              <Switch 
+                checked={gateway.enabled} 
+                onCheckedChange={handleMainToggle}
+              />
             </div>
 
             <GatewaySettings 

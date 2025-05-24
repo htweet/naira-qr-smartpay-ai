@@ -34,6 +34,13 @@ const GatewayOverview = ({ gateways, onToggleGateway, onSelectGateway }: Gateway
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
 
+  const handleToggle = (gatewayId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('Toggling gateway:', gatewayId);
+    onToggleGateway(gatewayId);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {gateways.map((gateway) => (
@@ -46,7 +53,7 @@ const GatewayOverview = ({ gateways, onToggleGateway, onSelectGateway }: Gateway
               </div>
               <Switch
                 checked={gateway.enabled}
-                onCheckedChange={() => onToggleGateway(gateway.id)}
+                onCheckedChange={() => handleToggle(gateway.id, {} as React.MouseEvent)}
               />
             </div>
             {getStatusBadge(gateway.status)}

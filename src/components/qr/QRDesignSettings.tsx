@@ -74,6 +74,41 @@ const QRDesignSettings = ({ qrConfig, setQrConfig }: QRDesignSettingsProps) => {
           </SelectContent>
         </Select>
       </div>
+
+      <div>
+        <Label htmlFor="pattern">Pattern Style</Label>
+        <Select 
+          value={qrConfig.pattern} 
+          onValueChange={(value) => setQrConfig({...qrConfig, pattern: value})}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="standard">Standard</SelectItem>
+            <SelectItem value="dots">Dots</SelectItem>
+            <SelectItem value="rounded">Rounded</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label htmlFor="frame-style">Frame Style</Label>
+        <Select 
+          value={qrConfig.frame_style} 
+          onValueChange={(value) => setQrConfig({...qrConfig, frame_style: value})}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="square">Square</SelectItem>
+            <SelectItem value="rounded">Rounded</SelectItem>
+            <SelectItem value="circle">Circle</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

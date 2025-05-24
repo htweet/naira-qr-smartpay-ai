@@ -133,8 +133,17 @@ export const usePaymentGateways = () => {
   ]);
 
   const toggleGateway = async (gatewayId: string) => {
+    console.log('Toggling gateway:', gatewayId);
+    
     const gateway = gateways.find(g => g.id === gatewayId);
-    if (!gateway) return;
+    if (!gateway) {
+      toast({
+        title: "Error",
+        description: "Gateway not found",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const newEnabled = !gateway.enabled;
     
@@ -145,13 +154,21 @@ export const usePaymentGateways = () => {
           gateway_id: gatewayId,
           gateway_name: gateway.name,
           enabled: newEnabled,
+        }, {
+          onConflict: 'gateway_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
-      setGateways(gateways.map(g => 
-        g.id === gatewayId ? { ...g, enabled: newEnabled } : g
-      ));
+      // Update local state
+      setGateways(prevGateways => 
+        prevGateways.map(g => 
+          g.id === gatewayId ? { ...g, enabled: newEnabled } : g
+        )
+      );
 
       toast({
         title: `${gateway.name} ${newEnabled ? 'Enabled' : 'Disabled'}`,
@@ -161,39 +178,55 @@ export const usePaymentGateways = () => {
       console.error('Error toggling gateway:', error);
       toast({
         title: "Error",
-        description: "Failed to update gateway status",
+        description: "Failed to update gateway status. Please try again.",
         variant: "destructive",
       });
     }
   };
 
   const updateGatewaySettings = async (gatewayId: string, settings: any) => {
+    console.log('Updating gateway settings:', gatewayId, settings);
+    
     try {
+      const gateway = gateways.find(g => g.id === gatewayId);
+      if (!gateway) {
+        throw new Error("Gateway not found");
+      }
+
       const { error } = await supabase
         .from('payment_gateway_configs')
         .upsert({
           gateway_id: gatewayId,
-          gateway_name: gateways.find(g => g.id === gatewayId)?.name || '',
+          gateway_name: gateway.name,
+          enabled: gateway.enabled,
           ...settings,
+        }, {
+          onConflict: 'gateway_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
-      setGateways(gateways.map(gateway => 
-        gateway.id === gatewayId 
-          ? { ...gateway, ...settings }
-          : gateway
-      ));
+      // Update local state
+      setGateways(prevGateways => 
+        prevGateways.map(gateway => 
+          gateway.id === gatewayId 
+            ? { ...gateway, ...settings }
+            : gateway
+        )
+      );
 
       toast({
         title: "Settings Updated",
         description: "Gateway configuration has been updated successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating gateway settings:', error);
       toast({
         title: "Error",
-        description: "Failed to update gateway settings",
+        description: error.message || "Failed to update gateway settings",
         variant: "destructive",
       });
     }

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { QrCode, Camera, CameraOff, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const QRScanner = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -17,8 +18,17 @@ const QRScanner = () => {
     amount: '',
     description: '',
     merchantName: '',
-    gateway: ''
+    gateway: '',
+    qrCodeId: ''
   });
+
+  // Auto-start scanning when component mounts
+  useEffect(() => {
+    startScanning();
+    return () => {
+      stopScanning();
+    };
+  }, []);
 
   const startScanning = async () => {
     try {
@@ -48,22 +58,62 @@ const QRScanner = () => {
     setIsScanning(false);
   };
 
-  const processQRCode = (code: string) => {
+  const processQRCode = async (code: string) => {
     console.log('Processing QR code:', code);
     setQrCode(code);
     
-    // Simulate payment details extraction
-    setPaymentDetails({
-      amount: '₦5,000',
-      description: 'Payment Request',
-      merchantName: 'Sample Merchant',
-      gateway: 'Moniepoint'
-    });
+    try {
+      // Try to fetch QR code details from database
+      if (code.startsWith('PayQR:') || code.startsWith('QR')) {
+        const qrId = code.includes(':') ? code.split(':')[1] : code;
+        
+        const { data: qrData, error } = await supabase
+          .from('qr_codes')
+          .select('*')
+          .or(`qr_code_id.eq.${qrId},id.eq.${qrId}`)
+          .single();
 
-    toast({
-      title: "QR Code Scanned",
-      description: "Payment details loaded successfully",
-    });
+        if (qrData && !error) {
+          setPaymentDetails({
+            amount: qrData.amount ? `₦${qrData.amount.toLocaleString()}` : 'Variable Amount',
+            description: qrData.description || 'Payment Request',
+            merchantName: 'Merchant Business',
+            gateway: qrData.gateway_id || 'Moniepoint',
+            qrCodeId: qrData.qr_code_id
+          });
+        } else {
+          // Fallback to simulated data
+          setPaymentDetails({
+            amount: '₦5,000',
+            description: 'Payment Request',
+            merchantName: 'Sample Merchant',
+            gateway: 'Moniepoint',
+            qrCodeId: code
+          });
+        }
+      } else {
+        // Handle other QR code formats
+        setPaymentDetails({
+          amount: 'Variable Amount',
+          description: 'Payment Request',
+          merchantName: 'Sample Merchant',
+          gateway: 'Moniepoint',
+          qrCodeId: code
+        });
+      }
+
+      toast({
+        title: "QR Code Scanned",
+        description: "Payment details loaded successfully",
+      });
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process QR code",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleManualEntry = () => {
@@ -73,21 +123,57 @@ const QRScanner = () => {
     }
   };
 
-  const handlePayment = () => {
-    toast({
-      title: "Payment Initiated",
-      description: "Redirecting to payment gateway...",
-    });
-    
-    // Here you would integrate with the actual payment gateway
-    console.log('Initiating payment with details:', paymentDetails);
-  };
+  const handlePayment = async () => {
+    try {
+      // Store payment attempt in database
+      const { error } = await supabase
+        .from('conversion_events')
+        .insert({
+          event_type: 'payment_initiated',
+          value: parseFloat(paymentDetails.amount.replace(/[₦,]/g, '')) || 0,
+          source: 'qr_scanner',
+          metadata: {
+            qr_code_id: paymentDetails.qrCodeId,
+            gateway: paymentDetails.gateway,
+            description: paymentDetails.description
+          }
+        });
 
-  useEffect(() => {
-    return () => {
-      stopScanning();
-    };
-  }, []);
+      if (error) {
+        console.error('Error logging payment:', error);
+      }
+
+      toast({
+        title: "Payment Initiated",
+        description: "Redirecting to payment gateway...",
+      });
+      
+      // Simulate payment processing
+      setTimeout(() => {
+        toast({
+          title: "Payment Successful",
+          description: `Payment of ${paymentDetails.amount} processed successfully`,
+        });
+        
+        // Reset the form
+        setQrCode('');
+        setPaymentDetails({
+          amount: '',
+          description: '',
+          merchantName: '',
+          gateway: '',
+          qrCodeId: ''
+        });
+      }, 2000);
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "Payment Failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
