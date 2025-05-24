@@ -3,12 +3,14 @@ import { useState } from "react";
 import QRCodeForm from "@/components/qr/QRCodeForm";
 import QRPreview from "@/components/qr/QRPreview";
 import QRHistory from "@/components/qr/QRHistory";
+import { useQRCodes } from "@/hooks/useQRCodes";
 
 interface QRCodeGeneratorProps {
   merchant: any;
 }
 
 const QRCodeGenerator = ({ merchant }: QRCodeGeneratorProps) => {
+  const { qrCodes } = useQRCodes();
   const [qrConfig, setQrConfig] = useState({
     type: "dynamic",
     amount: "",
@@ -30,7 +32,7 @@ const QRCodeGenerator = ({ merchant }: QRCodeGeneratorProps) => {
         <QRCodeForm qrConfig={qrConfig} setQrConfig={setQrConfig} />
         <QRPreview qrConfig={qrConfig} />
       </div>
-      <QRHistory />
+      <QRHistory generatedQRs={qrCodes} />
     </div>
   );
 };
