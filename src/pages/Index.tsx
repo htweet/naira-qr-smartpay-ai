@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +19,7 @@ import PricingPlans from "@/components/PricingPlans";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackEvent, trackConversion } from "@/utils/tracker";
 import { useNavigate } from "react-router-dom";
+import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("overview");

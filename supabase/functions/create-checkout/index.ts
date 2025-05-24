@@ -18,6 +18,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log("Create checkout function called");
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -36,6 +38,8 @@ serve(async (req) => {
       throw new Error("User not found");
     }
 
+    console.log("User found:", user.email);
+
     // Find if user already has a Stripe customer ID
     const { data: subscriptions } = await supabaseClient
       .from("subscriptions")
@@ -47,6 +51,7 @@ serve(async (req) => {
 
     // If no customer ID found, create a new customer
     if (!customerId) {
+      console.log("Creating new Stripe customer");
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
@@ -54,9 +59,11 @@ serve(async (req) => {
         },
       });
       customerId = customer.id;
+      console.log("Created customer:", customerId);
     }
 
     const { priceId } = await req.json();
+    console.log("Price ID:", priceId);
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -73,15 +80,20 @@ serve(async (req) => {
       automatic_tax: { enabled: true },
     });
 
+    console.log("Checkout session created:", session.id);
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Error in create-checkout:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: "Check function logs for more information"
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
+      status: 500,
     });
   }
 });
