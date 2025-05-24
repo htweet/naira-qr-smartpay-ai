@@ -63,6 +63,18 @@ const transformDatabaseRow = (row: any): QRCodeData => ({
   updated_at: row.updated_at,
 });
 
+// Transform QRCodeConfig to database format
+const transformConfigToDatabase = (config: Partial<QRCodeConfig>) => {
+  const dbUpdate: any = { ...config };
+  
+  // Convert amount string to number if present
+  if (config.amount !== undefined) {
+    dbUpdate.amount = config.amount ? parseFloat(config.amount) : null;
+  }
+  
+  return dbUpdate;
+};
+
 export const useQRCodes = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,9 +152,12 @@ export const useQRCodes = () => {
 
   const updateQRCode = async (id: string, updates: Partial<QRCodeConfig>) => {
     try {
+      // Transform the config data to database format
+      const dbUpdates = transformConfigToDatabase(updates);
+      
       const { data, error } = await supabase
         .from('qr_codes')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();
