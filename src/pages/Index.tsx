@@ -9,6 +9,7 @@ import SubscriptionPlans from "@/components/subscription/SubscriptionPlans";
 import SubscriptionBilling from "@/components/subscription/SubscriptionBilling";
 import GatewayManager from "@/components/gateway/GatewayManager";
 import { useProfile } from "@/hooks/useProfile";
+import { usePaymentGateways } from "@/hooks/usePaymentGateways";
 import HeroSection from "@/components/landing/HeroSection";
 import FeatureSection from "@/components/landing/FeatureSection";
 import PricingSection from "@/components/landing/PricingSection";
@@ -20,7 +21,9 @@ import Footer from "@/components/Footer";
 const Index = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { gateways, toggleGateway, updateGatewaySettings } = usePaymentGateways();
   const [activeTab, setActiveTab] = useState("scanner");
+  const [selectedGateway, setSelectedGateway] = useState("moniepoint");
 
   // Show customer scanner by default for all users
   useEffect(() => {
@@ -74,7 +77,13 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="gateways" className="space-y-6">
-            <GatewayManager />
+            <GatewayManager
+              gateways={gateways}
+              selectedGateway={selectedGateway}
+              onToggleGateway={toggleGateway}
+              onSelectGateway={setSelectedGateway}
+              onUpdateSettings={updateGatewaySettings}
+            />
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-6">
