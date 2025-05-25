@@ -12,9 +12,11 @@ import { getCurrentSubscription } from "@/utils/subscription";
 import SubscriptionBilling from "@/components/subscription/SubscriptionBilling";
 import AccountSettings from "@/components/settings/AccountSettings";
 import QRScanner from "@/components/customer/QRScanner";
+import { useProfile } from "@/hooks/useProfile";
 
 const Index = () => {
   const { isAuthenticated, user } = useAuth();
+  const { profile } = useProfile();
   const [activeTab, setActiveTab] = useState("merchant");
   const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
@@ -107,7 +109,7 @@ const Index = () => {
         <TabsContent value="merchant" className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
-              <QRCodeGenerator />
+              <QRCodeGenerator merchant={profile || {}} />
             </div>
 
             <div className="space-y-8">
@@ -167,7 +169,7 @@ const Index = () => {
             <Button variant="ghost" onClick={() => setActiveTab("merchant")} className="mb-4">
               ← Back to Dashboard
             </Button>
-            <SubscriptionBilling merchant={{}} />
+            <SubscriptionBilling merchant={profile || {}} />
           </div>
         </TabsContent>
       </Tabs>
