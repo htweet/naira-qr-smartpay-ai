@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +15,7 @@ import PricingSection from "@/components/landing/PricingSection";
 import TestimonialSection from "@/components/landing/TestimonialSection";
 import FAQSection from "@/components/landing/FAQSection";
 import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
-import Footer from "@/components/landing/Footer";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const { user } = useAuth();
