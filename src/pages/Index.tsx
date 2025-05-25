@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,15 +7,10 @@ import CustomerQRScanner from "@/components/customer/CustomerQRScanner";
 import AccountSettings from "@/components/account/AccountSettings";
 import SubscriptionPlans from "@/components/subscription/SubscriptionPlans";
 import SubscriptionBilling from "@/components/subscription/SubscriptionBilling";
-import GatewayManager from "@/components/gateway/GatewayManager";
+import PaymentGatewayManager from "@/components/PaymentGatewayManager";
 import { useProfile } from "@/hooks/useProfile";
-import HeroSection from "@/components/landing/HeroSection";
-import FeatureSection from "@/components/landing/FeatureSection";
-import PricingSection from "@/components/landing/PricingSection";
-import TestimonialSection from "@/components/landing/TestimonialSection";
-import FAQSection from "@/components/landing/FAQSection";
 import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
-import Footer from "@/components/landing/Footer";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const { user } = useAuth();
@@ -31,12 +27,19 @@ const Index = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <HeroSection />
-        <FeatureSection />
-        <PricingSection />
-        <TestimonialSection />
+        <div className="text-center py-20">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Welcome to PayQR</h1>
+          <p className="text-xl text-gray-600 mb-8">Nigeria's leading QR payment platform</p>
+          <div className="space-x-4">
+            <a href="/signin" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+              Sign In
+            </a>
+            <a href="/signup" className="border border-blue-600 text-blue-600 px-6 py-3 rounded-lg hover:bg-blue-50 transition-colors">
+              Sign Up
+            </a>
+          </div>
+        </div>
         <PaymentGatewaySection />
-        <FAQSection />
         <Footer />
       </div>
     );
@@ -73,7 +76,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="gateways" className="space-y-6">
-            <GatewayManager />
+            <PaymentGatewayManager merchant={profile} />
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-6">
