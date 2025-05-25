@@ -1,203 +1,281 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { QrCode, Camera, Upload, Zap, Clock, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import PaymentProcessor from "./PaymentProcessor";
+import React, { useEffect, useRef, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { QrCode, Camera, CameraOff, RefreshCw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const QRScanner = () => {
-  const [scannedData, setScannedData] = useState<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [qrCode, setQrCode] = useState('');
+  const [manualCode, setManualCode] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState({
+    amount: '',
+    description: '',
+    merchantName: '',
+    gateway: '',
+    qrCodeId: ''
+  });
 
-  // Mock QR data for demonstration
-  const mockQRData = {
-    id: 'qr_demo_001',
-    qr_code_id: 'DEMO001',
-    type: 'static',
-    amount: null,
-    description: 'Payment for services',
-    gateway_id: 'moniepoint',
-    business_name: 'Demo Merchant',
-    reference: 'REF_DEMO',
-    payments: 0,
-    revenue: 0,
-  };
+  // Auto-start scanning when component mounts
+  useEffect(() => {
+    startScanning();
+    return () => {
+      stopScanning();
+    };
+  }, []);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsScanning(true);
-    
+  const startScanning = async () => {
     try {
-      // Simulate QR code scanning
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo purposes, we'll use mock data
-      setScannedData(mockQRData);
-      
-      // Update scan count
-      await supabase
-        .from('qr_codes')
-        .update({
-          scans: (mockQRData.payments || 0) + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('qr_code_id', mockQRData.qr_code_id);
-
-      toast({
-        title: "QR Code Scanned!",
-        description: "Payment details loaded successfully",
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
       });
-      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setIsScanning(true);
+      }
     } catch (error) {
+      console.error('Error starting camera:', error);
       toast({
-        title: "Scan Failed",
-        description: "Could not read QR code. Please try again.",
+        title: "Camera Error",
+        description: "Could not access camera. Please check permissions.",
         variant: "destructive",
       });
-    } finally {
-      setIsScanning(false);
     }
   };
 
-  const handleProceedToPayment = () => {
-    setShowPayment(true);
+  const stopScanning = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsScanning(false);
   };
 
-  const handlePaymentComplete = () => {
-    setShowPayment(false);
-    setScannedData(null);
-    toast({
-      title: "Payment Complete!",
-      description: "Thank you for your payment",
-    });
-  };
+  const processQRCode = async (code: string) => {
+    console.log('Processing QR code:', code);
+    setQrCode(code);
+    
+    try {
+      // Try to fetch QR code details from database
+      if (code.startsWith('PayQR:') || code.startsWith('QR')) {
+        const qrId = code.includes(':') ? code.split(':')[1] : code;
+        
+        const { data: qrData, error } = await supabase
+          .from('qr_codes')
+          .select('*')
+          .or(`qr_code_id.eq.${qrId},id.eq.${qrId}`)
+          .single();
 
-  const getTypeIcon = (type: string) => {
-    return type === 'dynamic' ? <Zap className="h-4 w-4" /> : <Clock className="h-4 w-4" />;
-  };
+        if (qrData && !error) {
+          setPaymentDetails({
+            amount: qrData.amount ? `₦${qrData.amount.toLocaleString()}` : 'Variable Amount',
+            description: qrData.description || 'Payment Request',
+            merchantName: 'Merchant Business',
+            gateway: qrData.gateway_id || 'Moniepoint',
+            qrCodeId: qrData.qr_code_id
+          });
+        } else {
+          // Fallback to simulated data
+          setPaymentDetails({
+            amount: '₦5,000',
+            description: 'Payment Request',
+            merchantName: 'Sample Merchant',
+            gateway: 'Moniepoint',
+            qrCodeId: code
+          });
+        }
+      } else {
+        // Handle other QR code formats
+        setPaymentDetails({
+          amount: 'Variable Amount',
+          description: 'Payment Request',
+          merchantName: 'Sample Merchant',
+          gateway: 'Moniepoint',
+          qrCodeId: code
+        });
+      }
 
-  const getTypeColor = (type: string) => {
-    return type === 'dynamic' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-  };
-
-  const getGatewayColor = (gatewayId: string) => {
-    switch (gatewayId) {
-      case 'moniepoint':
-        return 'bg-blue-100 text-blue-800';
-      case 'opay':
-        return 'bg-green-100 text-green-800';
-      case 'palmpay':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      toast({
+        title: "QR Code Scanned",
+        description: "Payment details loaded successfully",
+      });
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process QR code",
+        variant: "destructive",
+      });
     }
   };
 
-  if (showPayment && scannedData) {
-    return (
-      <div className="space-y-6">
-        <Button 
-          variant="outline" 
-          onClick={() => setShowPayment(false)}
-          className="mb-4"
-        >
-          ← Back to Scanner
-        </Button>
-        <PaymentProcessor 
-          qrData={scannedData} 
-          onPaymentComplete={handlePaymentComplete}
-        />
-      </div>
-    );
-  }
+  const handleManualEntry = () => {
+    if (manualCode.trim()) {
+      processQRCode(manualCode.trim());
+      setManualCode('');
+    }
+  };
+
+  const handlePayment = async () => {
+    try {
+      // Store payment attempt in database
+      const { error } = await supabase
+        .from('conversion_events')
+        .insert({
+          event_type: 'payment_initiated',
+          value: parseFloat(paymentDetails.amount.replace(/[₦,]/g, '')) || 0,
+          source: 'qr_scanner',
+          metadata: {
+            qr_code_id: paymentDetails.qrCodeId,
+            gateway: paymentDetails.gateway,
+            description: paymentDetails.description
+          }
+        });
+
+      if (error) {
+        console.error('Error logging payment:', error);
+      }
+
+      toast({
+        title: "Payment Initiated",
+        description: "Redirecting to payment gateway...",
+      });
+      
+      // Simulate payment processing
+      setTimeout(() => {
+        toast({
+          title: "Payment Successful",
+          description: `Payment of ${paymentDetails.amount} processed successfully`,
+        });
+        
+        // Reset the form
+        setQrCode('');
+        setPaymentDetails({
+          amount: '',
+          description: '',
+          merchantName: '',
+          gateway: '',
+          qrCodeId: ''
+        });
+      }, 2000);
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        title: "Payment Failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Scanner Interface */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <QrCode className="h-5 w-5" />
             QR Code Scanner
           </CardTitle>
+          <CardDescription>
+            Scan QR codes to initiate payments or enter codes manually
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Upload QR Code */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-gray-100">
-              <Camera className="h-8 w-8 text-gray-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Camera Scanner */}
+            <div className="space-y-4">
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  className="w-full h-64 bg-gray-100 rounded-lg"
+                  style={{ display: isScanning ? 'block' : 'none' }}
+                />
+                {!isScanning && (
+                  <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <Camera className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                      <p className="text-gray-500">Camera preview</p>
+                    </div>
+                  </div>
+                )}
+                <div className="absolute inset-0 border-2 border-dashed border-white rounded-lg opacity-50"></div>
+              </div>
+              
+              <div className="flex gap-2">
+                {!isScanning ? (
+                  <Button onClick={startScanning} className="flex-1">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Start Scanning
+                  </Button>
+                ) : (
+                  <Button onClick={stopScanning} variant="destructive" className="flex-1">
+                    <CameraOff className="h-4 w-4 mr-2" />
+                    Stop Scanning
+                  </Button>
+                )}
+              </div>
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleFileUpload}
-              accept="image/*"
-            />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">Upload QR Code</h3>
-            <p className="mt-1 text-sm text-gray-500">Scan a NairaQR code to make a payment</p>
-            <div className="mt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isScanning}
-                className="gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                {isScanning ? "Scanning..." : "Upload Image"}
+
+            {/* Manual Entry */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="manual-code">Manual QR Code Entry</Label>
+                <Input
+                  id="manual-code"
+                  placeholder="Enter QR code manually"
+                  value={manualCode}
+                  onChange={(e) => setManualCode(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleManualEntry} className="w-full">
+                Process Code
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Scanned Data */}
-      {scannedData && (
+      {/* Payment Details */}
+      {qrCode && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Payment Details</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Badge className={getTypeColor(scannedData.type) + " gap-1 flex items-center"}>
-                  {getTypeIcon(scannedData.type)}
-                  {scannedData.type === 'dynamic' ? 'Fixed Amount' : 'Variable Amount'}
-                </Badge>
-                
-                <Badge className={getGatewayColor(scannedData.gateway_id)}>
-                  {scannedData.gateway_id.toUpperCase()}
-                </Badge>
-              </div>
-            </CardTitle>
+            <CardTitle>Payment Details</CardTitle>
+            <CardDescription>
+              Review the payment information before proceeding
+            </CardDescription>
           </CardHeader>
-          
           <CardContent className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="font-medium text-lg">{scannedData.business_name}</p>
-              <p className="text-gray-600 text-sm mt-1">{scannedData.description}</p>
-              
-              {scannedData.amount && (
-                <div className="mt-2 font-bold text-xl">
-                  ₦{parseFloat(scannedData.amount).toLocaleString()}
-                </div>
-              )}
-              
-              <div className="mt-3 text-sm text-gray-500">
-                QR Code ID: {scannedData.qr_code_id}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Amount</Label>
+                <div className="text-2xl font-bold text-green-600">{paymentDetails.amount}</div>
+              </div>
+              <div>
+                <Label>Gateway</Label>
+                <Badge variant="outline">{paymentDetails.gateway}</Badge>
               </div>
             </div>
             
-            <Button onClick={handleProceedToPayment} className="w-full">
+            <div>
+              <Label>Merchant</Label>
+              <p className="font-medium">{paymentDetails.merchantName}</p>
+            </div>
+            
+            <div>
+              <Label>Description</Label>
+              <p className="text-gray-600">{paymentDetails.description}</p>
+            </div>
+
+            <Button onClick={handlePayment} className="w-full" size="lg">
               Proceed to Payment
             </Button>
           </CardContent>

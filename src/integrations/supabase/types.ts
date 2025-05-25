@@ -162,42 +162,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          address: string | null
-          business_logo: string | null
-          business_name: string | null
-          created_at: string | null
-          id: string
-          phone: string | null
-          updated_at: string | null
-          user_id: string
-          website: string | null
-        }
-        Insert: {
-          address?: string | null
-          business_logo?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string | null
-          user_id: string
-          website?: string | null
-        }
-        Update: {
-          address?: string | null
-          business_logo?: string | null
-          business_name?: string | null
-          created_at?: string | null
-          id?: string
-          phone?: string | null
-          updated_at?: string | null
-          user_id?: string
-          website?: string | null
-        }
-        Relationships: []
-      }
       qr_codes: {
         Row: {
           amount: number | null
@@ -295,42 +259,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      subscribers: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          stripe_customer_id: string | null
-          subscribed: boolean
-          subscription_end: string | null
-          subscription_tier: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          stripe_customer_id?: string | null
-          subscribed?: boolean
-          subscription_end?: string | null
-          subscription_tier?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          stripe_customer_id?: string | null
-          subscribed?: boolean
-          subscription_end?: string | null
-          subscription_tier?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
       }
       subscriptions: {
         Row: {

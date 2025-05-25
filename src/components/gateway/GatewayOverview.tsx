@@ -4,8 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, AlertCircle, Activity } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 interface GatewayOverviewProps {
   gateways: any[];
@@ -36,31 +34,11 @@ const GatewayOverview = ({ gateways, onToggleGateway, onSelectGateway }: Gateway
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
 
-  const handleToggle = async (gateway: any) => {
-    try {
-      // Update the gateway status in the database
-      const { error } = await supabase
-        .from('payment_gateway_configs')
-        .update({ enabled: !gateway.enabled })
-        .eq('id', gateway.id);
-      
-      if (error) throw error;
-      
-      // Call the toggle handler to update the UI
-      onToggleGateway(gateway.id);
-      
-      toast({
-        title: `Gateway ${!gateway.enabled ? 'Enabled' : 'Disabled'}`,
-        description: `${gateway.name} has been ${!gateway.enabled ? 'enabled' : 'disabled'} successfully.`,
-      });
-    } catch (error) {
-      console.error('Failed to update gateway status:', error);
-      toast({
-        title: "Update Failed",
-        description: "Could not update gateway status. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleToggle = (gatewayId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    console.log('Toggling gateway:', gatewayId);
+    onToggleGateway(gatewayId);
   };
 
   return (
@@ -75,7 +53,7 @@ const GatewayOverview = ({ gateways, onToggleGateway, onSelectGateway }: Gateway
               </div>
               <Switch
                 checked={gateway.enabled}
-                onCheckedChange={() => handleToggle(gateway)}
+                onCheckedChange={() => handleToggle(gateway.id, {} as React.MouseEvent)}
               />
             </div>
             {getStatusBadge(gateway.status)}

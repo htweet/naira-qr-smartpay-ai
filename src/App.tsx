@@ -12,8 +12,6 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useEffect } from "react";
 import { trackPageView } from "./utils/tracker";
-import AccountSettings from "./components/settings/AccountSettings";
-import SubscriptionBilling from "./components/subscription/SubscriptionBilling";
 
 const queryClient = new QueryClient();
 
