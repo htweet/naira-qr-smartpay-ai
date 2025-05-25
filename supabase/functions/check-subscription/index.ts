@@ -22,48 +22,38 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client with the user's JWT
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Get the user from their JWT
     const authHeader = req.headers.get("Authorization");
+    
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
-    // Use the token to get the user
-    const jwt = authHeader.split(" ")[1];
-    const { data: { user }, error } = await supabaseClient.auth.getUser(jwt);
+    const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace("Bearer ", ""));
     
-    if (error || !user) {
-      throw error || new Error("User not found");
+    if (!user?.email) {
+      throw new Error("User not found");
     }
 
-    // Check if the user has any subscriptions
-    const { data: subscriptionData } = await supabaseClient
-      .from("subscriptions")
-      .select("stripe_subscription_id, stripe_customer_id")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
+    // Check Stripe customer
+    const customers = await stripe.customers.list({
+      email: user.email,
+      limit: 1,
+    });
 
-    if (!subscriptionData?.stripe_subscription_id) {
-      // If no active subscription found, update the database
-      await supabaseClient.from("subscriptions")
-        .upsert({
-          user_id: user.id,
-          status: "inactive",
-          plan_id: "free",
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
-        
+    if (customers.data.length === 0) {
+      // Update subscriber record
+      await supabaseClient.from("subscribers").upsert({
+        user_id: user.id,
+        email: user.email,
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null,
+        updated_at: new Date().toISOString(),
+      });
+
       return new Response(
-        JSON.stringify({ 
-          subscribed: false,
-          plan: "free"
-        }),
+        JSON.stringify({ subscribed: false }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -71,32 +61,53 @@ serve(async (req) => {
       );
     }
 
-    // Get subscription details from Stripe
-    const subscription = await stripe.subscriptions.retrieve(
-      subscriptionData.stripe_subscription_id
-    );
+    const customerId = customers.data[0].id;
 
-    // Update the subscription in the database
-    const planId = subscription.items.data[0].price.lookup_key || "unknown";
-    
-    await supabaseClient.from("subscriptions").upsert({
+    // Get active subscriptions
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 1,
+    });
+
+    const hasActiveSub = subscriptions.data.length > 0;
+    let subscriptionTier = null;
+    let subscriptionEnd = null;
+
+    if (hasActiveSub) {
+      const subscription = subscriptions.data[0];
+      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      
+      // Determine tier based on price
+      const priceId = subscription.items.data[0].price.id;
+      const price = await stripe.prices.retrieve(priceId);
+      const amount = price.unit_amount || 0;
+      
+      if (amount <= 4999) {
+        subscriptionTier = "Basic";
+      } else if (amount <= 9999) {
+        subscriptionTier = "Premium";
+      } else {
+        subscriptionTier = "Enterprise";
+      }
+    }
+
+    // Update subscriber record
+    await supabaseClient.from("subscribers").upsert({
       user_id: user.id,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer as string,
-      plan_id: planId,
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
+      email: user.email,
+      stripe_customer_id: customerId,
+      subscribed: hasActiveSub,
+      subscription_tier: subscriptionTier,
+      subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+    });
 
     return new Response(
       JSON.stringify({
-        subscribed: subscription.status === "active",
-        plan: planId,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
+        subscribed: hasActiveSub,
+        subscription_tier: subscriptionTier,
+        subscription_end: subscriptionEnd,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

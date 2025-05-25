@@ -1,146 +1,142 @@
 
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { QrCode } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import UserTypeSelection from "@/components/auth/UserTypeSelection";
+import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { HomeIcon } from 'lucide-react';
 
-const SignUp = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [userType, setUserType] = useState<'merchant' | 'customer' | null>(null);
-  const [loading, setLoading] = useState(false);
+const formSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  businessName: z.string().min(2, 'Business name is required'),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+const SignUp: React.FC = () => {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      businessName: '',
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    setError('');
     
-    if (!userType) {
-      alert("Please select an account type");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      alert("Password must be at least 6 characters long");
-      return;
-    }
-
-    setLoading(true);
-
     try {
-      const metadata = {
-        user_type: userType,
-        ...(userType === 'merchant' && businessName && { business_name: businessName })
-      };
-
-      await signUp(email, password, metadata);
-      navigate("/");
-    } catch (error) {
-      console.error("Signup error:", error);
+      await signUp(
+        data.email, 
+        data.password, 
+        { business_name: data.businessName }
+      );
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign up');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="absolute top-4 left-4">
+        <Button variant="ghost" asChild>
+          <Link to="/">
+            <HomeIcon className="mr-2 h-4 w-4" />
+            Home
+          </Link>
+        </Button>
+      </div>
+      
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
-            <QrCode className="h-8 w-8 text-white" />
-          </div>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>Sign up to start using PayQR</CardDescription>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardDescription>
+            Register your business and start accepting payments
+          </CardDescription>
         </CardHeader>
-
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <UserTypeSelection 
-              selectedType={userType}
-              onSelectType={setUserType}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+        
+        <CardContent>
+          {error && (
+            <div className="bg-red-50 text-red-500 p-3 rounded-md mb-4 text-sm">
+              {error}
             </div>
-
-            {userType === 'merchant' && (
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Business Name (Optional)</Label>
-                <Input 
-                  id="businessName" 
-                  type="text" 
-                  placeholder="Enter your business name" 
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                placeholder="Create a password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password" 
-                placeholder="Confirm your password" 
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-          </CardContent>
+          )}
           
-          <CardFooter className="flex flex-col gap-4">
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-              disabled={loading || !userType}
-            >
-              {loading ? "Creating Account..." : "Create Account"}
-            </Button>
-            
-            <div className="text-center text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link to="/signin" className="text-blue-600 hover:underline">
-                Sign In
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="businessName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your Business Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="name@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? 'Creating account...' : 'Sign up'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        
+        <CardFooter>
+          <div className="text-sm text-center w-full">
+            Already have an account?{' '}
+            <Link to="/signin" className="text-blue-600 hover:text-blue-800 font-medium">
+              Sign in
+            </Link>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

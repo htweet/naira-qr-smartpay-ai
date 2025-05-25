@@ -6,6 +6,8 @@ import { Sparkles } from "lucide-react";
 import QRBasicSettings from "./QRBasicSettings";
 import QRDesignSettings from "./QRDesignSettings";
 import { useQRCodes } from "@/hooks/useQRCodes";
+import { toast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
 
 interface QRCodeFormProps {
   qrConfig: any;
@@ -14,12 +16,29 @@ interface QRCodeFormProps {
 
 const QRCodeForm = ({ qrConfig, setQrConfig }: QRCodeFormProps) => {
   const { createQRCode } = useQRCodes();
+  const { profile } = useProfile();
 
   const handleGenerate = async () => {
     try {
-      await createQRCode(qrConfig);
+      // Set business logo if available and enabled
+      const updatedConfig = {
+        ...qrConfig,
+        business_logo: qrConfig.logo_enabled ? profile?.business_logo : null,
+        business_name: profile?.business_name,
+      };
+      
+      await createQRCode(updatedConfig);
+      toast({
+        title: "QR Code Generated",
+        description: "Your QR code has been created successfully",
+      });
     } catch (error) {
       console.error('Error generating QR code:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Could not generate QR code. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
