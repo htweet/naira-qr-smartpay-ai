@@ -6,8 +6,6 @@ import { Sparkles } from "lucide-react";
 import QRBasicSettings from "./QRBasicSettings";
 import QRDesignSettings from "./QRDesignSettings";
 import { useQRCodes } from "@/hooks/useQRCodes";
-import { useProfile } from "@/hooks/useProfile";
-import { useEffect } from "react";
 
 interface QRCodeFormProps {
   qrConfig: any;
@@ -16,17 +14,6 @@ interface QRCodeFormProps {
 
 const QRCodeForm = ({ qrConfig, setQrConfig }: QRCodeFormProps) => {
   const { createQRCode } = useQRCodes();
-  const { profile } = useProfile();
-
-  // Link business logo from profile to QR config
-  useEffect(() => {
-    if (profile?.business_logo && qrConfig.logo_enabled) {
-      setQrConfig(prev => ({
-        ...prev,
-        business_logo: profile.business_logo
-      }));
-    }
-  }, [profile?.business_logo, qrConfig.logo_enabled, setQrConfig]);
 
   const handleGenerate = async () => {
     try {

@@ -1,137 +1,128 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, TrendingUp, Shield, Zap } from "lucide-react";
+import { CheckCircle, Plus, ArrowRight } from "lucide-react";
 
 const PaymentGatewaySection = () => {
   const gateways = [
     {
-      id: "moniepoint",
-      name: "Moniepoint (Monnify)",
-      description: "Nigeria's leading payment gateway with robust infrastructure",
-      color: "blue", // Blue theme as requested
-      bgColor: "from-blue-500 to-blue-600",
-      lightBg: "bg-blue-50",
+      name: "Moniepoint",
+      logo: "M",
+      description: "Leading payment gateway for virtual accounts and bank transfers",
       features: ["Virtual Accounts", "Bank Transfer", "Card Payments", "Customer Verification"],
-      successRate: "98.5%",
-      processingTime: "2.3s",
-      status: "Integrated"
+      status: "Integrated",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-100",
+      textColor: "text-blue-600"
     },
     {
-      id: "opay",
       name: "Opay",
-      description: "Fast and secure digital payment solutions for businesses",
-      color: "green", // Green theme as requested
-      bgColor: "from-green-500 to-green-600", 
-      lightBg: "bg-green-50",
+      logo: "O",
+      description: "Fast and secure mobile payments with e-wallet integration",
       features: ["3DS Card Payment", "E-Wallet", "Bank Debit", "Mobile SDKs"],
-      successRate: "97.8%",
-      processingTime: "3.1s",
-      status: "Integrated"
+      status: "Integrated",
+      color: "from-green-500 to-green-600",
+      bgColor: "bg-green-100",
+      textColor: "text-green-600"
     },
     {
-      id: "palmpay",
       name: "Palmpay",
-      description: "Comprehensive fintech platform for modern businesses",
-      color: "purple", // Purple theme as requested
-      bgColor: "from-purple-500 to-purple-600",
-      lightBg: "bg-purple-50", 
+      logo: "P",
+      description: "Zero-fee transfers and comprehensive business tools",
       features: ["Zero-fee Transfers", "Business Tools", "POS Integration", "Bulk Payments"],
-      successRate: "96.2%",
-      processingTime: "4.2s",
-      status: "Integrated"
+      status: "Integrated",
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-100",
+      textColor: "text-purple-600"
+    },
+    {
+      name: "More Coming",
+      logo: <Plus className="h-6 w-6" />,
+      description: "Additional payment gateways and methods will be added soon",
+      features: ["Flutterwave", "Paystack", "Bank APIs", "USSD Integration"],
+      status: "Coming Soon",
+      color: "from-gray-400 to-gray-500",
+      bgColor: "bg-gray-100",
+      textColor: "text-gray-600"
     }
   ];
 
   return (
-    <section className="py-20 bg-white" id="payment-gateways">
-      <div className="container mx-auto px-4">
+    <section className="py-20 px-4 bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="container mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
             Integrated Payment Gateways
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            We've partnered with Nigeria's top payment gateways to ensure your transactions 
-            are fast, secure, and reliable.
+            Connect with Nigeria's most trusted payment providers for seamless transaction processing
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {gateways.map((gateway) => (
-            <Card key={gateway.id} className={`overflow-hidden hover:shadow-xl transition-shadow ${gateway.lightBg} border-2`}>
-              <CardHeader className={`bg-gradient-to-r ${gateway.bgColor} text-white`}>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold">{gateway.name}</CardTitle>
-                  <Badge variant="secondary" className="bg-white/20 text-white">
-                    {gateway.status}
-                  </Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {gateways.map((gateway, index) => (
+            <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <CardHeader className="text-center pb-4">
+                <div className={`w-16 h-16 ${gateway.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
+                  {typeof gateway.logo === 'string' ? (
+                    <span className={`text-2xl font-bold ${gateway.textColor}`}>
+                      {gateway.logo}
+                    </span>
+                  ) : (
+                    <div className={gateway.textColor}>
+                      {gateway.logo}
+                    </div>
+                  )}
                 </div>
-                <CardDescription className="text-blue-100">
+                <CardTitle className="text-xl mb-2">{gateway.name}</CardTitle>
+                <Badge 
+                  variant={gateway.status === "Integrated" ? "default" : "secondary"}
+                  className={gateway.status === "Integrated" ? "bg-green-100 text-green-700" : ""}
+                >
+                  {gateway.status}
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <CardDescription className="text-center">
                   {gateway.description}
                 </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-1" />
-                      <span className="font-semibold text-green-600">{gateway.successRate}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">Success Rate</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Zap className="h-5 w-5 text-orange-500 mr-1" />
-                      <span className="font-semibold text-orange-600">{gateway.processingTime}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">Avg. Speed</p>
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    Key Features:
-                  </h4>
-                  <ul className="space-y-1">
-                    {gateway.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <div className="flex items-center justify-center gap-2 text-green-600">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-medium">Production Ready</span>
-                  </div>
+                  {gateway.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-center gap-2 text-sm">
+                      <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                      <span className="text-gray-600">{feature}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            All gateways are pre-integrated and ready to use. No additional setup required.
-          </p>
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-            <span className="flex items-center gap-1">
-              <Shield className="h-4 w-4" />
-              Bank-level Security
-            </span>
-            <span className="flex items-center gap-1">
-              <CheckCircle className="h-4 w-4" />
-              PCI DSS Compliant
-            </span>
-            <span className="flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              99.9% Uptime
-            </span>
+        {/* Integration Benefits */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <ArrowRight className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Smart Routing</h3>
+              <p className="text-gray-600">Automatically route payments to the best performing gateway</p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Higher Success Rates</h3>
+              <p className="text-gray-600">Increase payment success with fallback gateway options</p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Plus className="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-bold mb-2">Unified Management</h3>
+              <p className="text-gray-600">Manage all payment gateways from one dashboard</p>
+            </div>
           </div>
         </div>
       </div>
