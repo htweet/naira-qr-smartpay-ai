@@ -1,13 +1,15 @@
 
-import { Facebook, Twitter, Instagram, Linkedin, Mail, PhoneCall, MapPin, CreditCard, Shield, Clock, HelpCircle } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Mail, PhoneCall, MapPin, CreditCard, Shield, Clock, HelpCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/utils/tracker";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +49,35 @@ const Footer = () => {
 
   return (
     <footer className="bg-gradient-to-b from-white to-blue-50">
+      {/* Call to Action Section */}
+      <section className="bg-gradient-to-r from-blue-500 to-purple-600 py-16 px-4">
+        <div className="container mx-auto text-center">
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Ready to Transform Your Payment Experience?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Join thousands of Nigerian merchants who trust PayQR for their payment needs.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button 
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 text-lg font-semibold"
+              onClick={() => navigate("/signup")}
+            >
+              Get Started Now <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button 
+              size="lg"
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg"
+              onClick={() => navigate("/signin")}
+            >
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
@@ -148,7 +179,6 @@ const Footer = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            {/* Replace 'title' prop with aria-label for accessibility */}
             <CreditCard className="h-5 w-5 text-gray-400" aria-label="Secure Payments" />
             <Shield className="h-5 w-5 text-gray-400" aria-label="Data Protection" />
             <Clock className="h-5 w-5 text-gray-400" aria-label="24/7 Support" />

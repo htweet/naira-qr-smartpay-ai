@@ -32,6 +32,7 @@ import ComprehensiveFeatures from "@/components/landing/ComprehensiveFeatures";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialSection from "@/components/landing/TestimonialSection";
 import FAQSection from "@/components/landing/FAQSection";
+import CustomerDashboard from "@/components/customer/CustomerDashboard";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("scanner");
@@ -175,35 +176,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8">
         {userType === 'customer' ? (
-          // Customer Interface - Scanner is default
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-white">
-              <TabsTrigger value="scanner" className="flex items-center gap-2">
-                <Scan className="h-4 w-4" />
-                QR Scanner
-              </TabsTrigger>
-              <TabsTrigger value="transactions" className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                Transactions
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <Brain className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="scanner">
-              <QRScanner />
-            </TabsContent>
-
-            <TabsContent value="transactions">
-              <CustomerTransactions />
-            </TabsContent>
-
-            <TabsContent value="analytics">
-              <AIAnalytics merchant={user} userType="customer" />
-            </TabsContent>
-          </Tabs>
+          <CustomerDashboard user={user} />
         ) : (
           // Merchant Interface
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
