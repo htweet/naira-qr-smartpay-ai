@@ -28,6 +28,7 @@ import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
 // Landing page components
 import HeroSection from "@/components/landing/HeroSection";
 import FeatureSection from "@/components/landing/FeatureSection";
+import ComprehensiveFeatures from "@/components/landing/ComprehensiveFeatures";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialSection from "@/components/landing/TestimonialSection";
 import FAQSection from "@/components/landing/FAQSection";
@@ -107,6 +108,7 @@ const Index = () => {
         <main>
           <HeroSection />
           <FeatureSection />
+          <ComprehensiveFeatures />
           <PaymentGatewaySection />
           <PricingSection />
           <TestimonialSection />
