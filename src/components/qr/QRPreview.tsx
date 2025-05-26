@@ -1,15 +1,45 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QrCode, Download, Share2, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QRPreviewProps {
   qrConfig: any;
 }
 
 const QRPreview = ({ qrConfig }: QRPreviewProps) => {
+  const { user } = useAuth();
+  const [businessLogo, setBusinessLogo] = useState<string>('');
+
+  useEffect(() => {
+    if (user && qrConfig.logo_enabled) {
+      fetchBusinessLogo();
+    }
+  }, [user, qrConfig.logo_enabled]);
+
+  const fetchBusinessLogo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('business_logo')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.business_logo) {
+        setBusinessLogo(data.business_logo);
+      }
+    } catch (error) {
+      console.error('Error fetching business logo:', error);
+    }
+  };
+
   const generateQRCodeURL = () => {
     const baseURL = "https://api.qrserver.com/v1/create-qr-code/";
     const size = "300x300";
@@ -17,7 +47,14 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
       ? `PayQR:${qrConfig.amount}:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}`
       : `PayQR:variable:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}`;
     
-    return `${baseURL}?size=${size}&data=${encodeURIComponent(data)}&color=${qrConfig.primary_color?.replace('#', '') || '000000'}&bgcolor=${qrConfig.secondary_color?.replace('#', '') || 'ffffff'}`;
+    let qrUrl = `${baseURL}?size=${size}&data=${encodeURIComponent(data)}&color=${qrConfig.primary_color?.replace('#', '') || '000000'}&bgcolor=${qrConfig.secondary_color?.replace('#', '') || 'ffffff'}`;
+    
+    // Add logo if enabled and available
+    if (qrConfig.logo_enabled && businessLogo) {
+      qrUrl += `&logo=${encodeURIComponent(businessLogo)}`;
+    }
+    
+    return qrUrl;
   };
 
   const handleDownload = () => {
@@ -66,7 +103,7 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
           Live Preview
         </CardTitle>
         <CardDescription>
-          See how your QR code will look
+          See how your QR code will look with your business branding
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-4">
@@ -103,6 +140,12 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
           )}
           {qrConfig.gateway_id && (
             <Badge variant="secondary">{qrConfig.gateway_id}</Badge>
+          )}
+          {qrConfig.logo_enabled && businessLogo && (
+            <div className="flex items-center justify-center gap-2 text-xs text-green-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              Business logo included
+            </div>
           )}
         </div>
 
