@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
 // Landing page components
 import HeroSection from "@/components/landing/HeroSection";
 import FeatureSection from "@/components/landing/FeatureSection";
+import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import ComprehensiveFeatures from "@/components/landing/ComprehensiveFeatures";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialSection from "@/components/landing/TestimonialSection";
@@ -108,6 +108,7 @@ const Index = () => {
         <main>
           <HeroSection />
           <FeatureSection />
+          <HowItWorksSection />
           <ComprehensiveFeatures />
           <PaymentGatewaySection />
           <PricingSection />

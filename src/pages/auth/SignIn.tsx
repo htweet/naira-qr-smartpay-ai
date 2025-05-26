@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { QrCode, ArrowLeft } from "lucide-react";
+import UserTypeSelection from "@/components/auth/UserTypeSelection";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackConversion } from "@/utils/tracker";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState<'merchant' | 'customer'>('customer');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -50,10 +52,12 @@ const SignIn = () => {
               <QrCode className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl">Sign In</CardTitle>
-            <CardDescription>Access your PayQR merchant account</CardDescription>
+            <CardDescription>Access your PayQR account</CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
+              <UserTypeSelection userType={userType} onUserTypeChange={setUserType} />
+              
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input 
@@ -85,7 +89,7 @@ const SignIn = () => {
                 className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                 disabled={loading}
               >
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? "Signing in..." : `Sign In as ${userType === 'merchant' ? 'Merchant' : 'Customer'}`}
               </Button>
               <p className="text-center text-sm">
                 Don't have an account?{" "}
