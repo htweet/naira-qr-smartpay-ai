@@ -1,14 +1,13 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Building, Smartphone } from "lucide-react";
 
 interface UserTypeSelectionProps {
-  selectedType: 'merchant' | 'customer' | null;
-  onSelectType: (type: 'merchant' | 'customer') => void;
+  userType: 'merchant' | 'customer';
+  onUserTypeChange: (type: 'merchant' | 'customer') => void;
 }
 
-const UserTypeSelection = ({ selectedType, onSelectType }: UserTypeSelectionProps) => {
+const UserTypeSelection = ({ userType, onUserTypeChange }: UserTypeSelectionProps) => {
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
@@ -21,11 +20,11 @@ const UserTypeSelection = ({ selectedType, onSelectType }: UserTypeSelectionProp
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card 
           className={`cursor-pointer transition-all hover:shadow-md ${
-            selectedType === 'merchant' 
+            userType === 'merchant' 
               ? 'ring-2 ring-blue-500 bg-blue-50' 
               : 'hover:border-gray-300'
           }`}
-          onClick={() => onSelectType('merchant')}
+          onClick={() => onUserTypeChange('merchant')}
         >
           <CardHeader className="text-center pb-2">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
@@ -48,11 +47,11 @@ const UserTypeSelection = ({ selectedType, onSelectType }: UserTypeSelectionProp
 
         <Card 
           className={`cursor-pointer transition-all hover:shadow-md ${
-            selectedType === 'customer' 
+            userType === 'customer' 
               ? 'ring-2 ring-green-500 bg-green-50' 
               : 'hover:border-gray-300'
           }`}
-          onClick={() => onSelectType('customer')}
+          onClick={() => onUserTypeChange('customer')}
         >
           <CardHeader className="text-center pb-2">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
