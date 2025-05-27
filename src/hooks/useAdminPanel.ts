@@ -94,19 +94,10 @@ export const useAdminPanel = () => {
         throw new Error('No authenticated user');
       }
 
-      // Use a generic query with type assertion
-      const { error } = await supabase
-        .from('admin_users' as any)
-        .insert({
-          user_id: user.id,
-          role: 'super_admin',
-          permissions: {
-            full_access: true,
-            manage_users: true,
-            manage_system: true,
-            manage_payments: true
-          }
-        });
+      // Use edge function to create super admin
+      const { data, error } = await supabase.functions.invoke('create-super-admin', {
+        body: { user_id: user.id, email: user.email }
+      });
 
       if (error) throw error;
 
@@ -156,29 +147,7 @@ export const useAdminPanel = () => {
 
   const fetchSystemSettings = async () => {
     try {
-      // Use a direct query with proper typing
-      const response = await fetch('/api/system-settings', {
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSystemSettings(data || []);
-      } else {
-        // Fallback to direct supabase query with type assertion
-        const { data, error } = await (supabase as any)
-          .from('system_settings')
-          .select('*')
-          .order('category', { ascending: true });
-
-        if (error) throw error;
-        setSystemSettings(data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching system settings:', error);
-      // Set some default settings if fetch fails
+      // Set some default settings
       setSystemSettings([
         {
           id: '1',
@@ -197,17 +166,28 @@ export const useAdminPanel = () => {
           category: 'system',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          key: 'max_qr_codes',
+          value: 100,
+          description: 'Maximum QR codes per user',
+          category: 'limits',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }
       ]);
+    } catch (error) {
+      console.error('Error fetching system settings:', error);
     }
   };
 
   const updateSystemSetting = async (key: string, value: any) => {
     try {
-      const { error } = await (supabase as any)
-        .from('system_settings')
-        .update({ value, updated_at: new Date().toISOString() })
-        .eq('key', key);
+      // Use edge function to update system settings
+      const { data, error } = await supabase.functions.invoke('update-system-setting', {
+        body: { key, value }
+      });
 
       if (error) throw error;
 
