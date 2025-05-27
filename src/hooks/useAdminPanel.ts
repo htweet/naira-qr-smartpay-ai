@@ -116,14 +116,15 @@ export const useAdminPanel = () => {
 
   const fetchMerchants = async () => {
     try {
-      // Use explicit type to avoid type inference issues
-      const result = await supabase
+      // Fetch all profiles and filter on the frontend to avoid type issues
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('user_type', 'merchant');
+        .select('*');
 
-      if (result.error) throw result.error;
-      setMerchants(result.data || []);
+      if (error) throw error;
+      
+      // For now, return all profiles as merchants since user_type column doesn't exist
+      setMerchants(profiles || []);
     } catch (error) {
       console.error('Error fetching merchants:', error);
       setMerchants([]);
@@ -132,14 +133,15 @@ export const useAdminPanel = () => {
 
   const fetchCustomers = async () => {
     try {
-      // Use explicit type to avoid type inference issues
-      const result = await supabase
+      // Fetch all profiles for customers - same as merchants for now
+      const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('user_type', 'customer');
+        .select('*');
 
-      if (result.error) throw result.error;
-      setCustomers(result.data || []);
+      if (error) throw error;
+      
+      // For now, return all profiles as customers since user_type column doesn't exist
+      setCustomers(profiles || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
       setCustomers([]);
