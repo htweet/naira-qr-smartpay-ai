@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,20 +36,15 @@ import FAQSection from "@/components/landing/FAQSection";
 import CustomerDashboard from "@/components/customer/CustomerDashboard";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("scanner");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
-  const [userType, setUserType] = useState<'merchant' | 'customer'>('customer');
 
   useEffect(() => {
     trackEvent({
       eventType: "page_view",
       eventData: { page: "home" }
     });
-
-    if (user?.user_metadata?.user_type) {
-      setUserType(user.user_metadata.user_type);
-    }
 
     // Set default tab based on user type
     if (user) {
@@ -64,6 +60,9 @@ const Index = () => {
     trackConversion("cta_click", 0, "homepage_hero");
     navigate("/signup");
   };
+
+  // Determine user type from metadata
+  const userType = user?.user_metadata?.user_type || 'customer';
 
   // If not logged in, show landing page
   if (!isAuthenticated && !loading) {
