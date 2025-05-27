@@ -87,14 +87,11 @@ export const useAdminPanel = () => {
 
   const createSuperAdmin = async (email: string) => {
     try {
-      // Get user by email from auth.users (this requires service role)
-      // For now, we'll create based on current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('No authenticated user');
       }
 
-      // Use edge function to create super admin
       const { data, error } = await supabase.functions.invoke('create-super-admin', {
         body: { user_id: user.id, email: user.email }
       });
@@ -147,8 +144,8 @@ export const useAdminPanel = () => {
 
   const fetchSystemSettings = async () => {
     try {
-      // Set some default settings
-      setSystemSettings([
+      // Set some default settings instead of querying a table that doesn't exist
+      const defaultSettings: SystemSetting[] = [
         {
           id: '1',
           key: 'app_name',
@@ -176,15 +173,17 @@ export const useAdminPanel = () => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
-      ]);
+      ];
+      
+      setSystemSettings(defaultSettings);
     } catch (error) {
       console.error('Error fetching system settings:', error);
+      setSystemSettings([]);
     }
   };
 
   const updateSystemSetting = async (key: string, value: any) => {
     try {
-      // Use edge function to update system settings
       const { data, error } = await supabase.functions.invoke('update-system-setting', {
         body: { key, value }
       });
