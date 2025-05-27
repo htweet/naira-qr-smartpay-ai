@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading";
@@ -39,7 +40,8 @@ const Index = () => {
 
   const createSuperAdminIfNeeded = async () => {
     try {
-      const { data, error } = await supabase
+      // Use type assertion to bypass TypeScript issues
+      const { data, error } = await (supabase as any)
         .from('admin_users')
         .select('id')
         .eq('user_id', user?.id)
@@ -47,7 +49,7 @@ const Index = () => {
 
       if (!data && !error) {
         // Create super admin entry
-        await supabase
+        await (supabase as any)
           .from('admin_users')
           .insert({
             user_id: user?.id,
