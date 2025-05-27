@@ -116,29 +116,33 @@ export const useAdminPanel = () => {
 
   const fetchMerchants = async () => {
     try {
-      const { data, error } = await supabase
+      // Use explicit type to avoid type inference issues
+      const result = await supabase
         .from('profiles')
         .select('*')
         .eq('user_type', 'merchant');
 
-      if (error) throw error;
-      setMerchants(data || []);
+      if (result.error) throw result.error;
+      setMerchants(result.data || []);
     } catch (error) {
       console.error('Error fetching merchants:', error);
+      setMerchants([]);
     }
   };
 
   const fetchCustomers = async () => {
     try {
-      const { data, error } = await supabase
+      // Use explicit type to avoid type inference issues
+      const result = await supabase
         .from('profiles')
         .select('*')
         .eq('user_type', 'customer');
 
-      if (error) throw error;
-      setCustomers(data || []);
+      if (result.error) throw result.error;
+      setCustomers(result.data || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
+      setCustomers([]);
     }
   };
 
