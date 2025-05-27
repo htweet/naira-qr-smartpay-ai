@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { usePaymentGateways } from "@/hooks/usePaymentGateways";
 
 interface QRBasicSettingsProps {
   qrConfig: any;
@@ -10,6 +11,11 @@ interface QRBasicSettingsProps {
 }
 
 const QRBasicSettings = ({ qrConfig, setQrConfig }: QRBasicSettingsProps) => {
+  const { gateways } = usePaymentGateways();
+
+  // Filter enabled gateways only
+  const enabledGateways = gateways.filter(gateway => gateway.enabled);
+
   return (
     <div className="space-y-4">
       <div>
@@ -76,11 +82,24 @@ const QRBasicSettings = ({ qrConfig, setQrConfig }: QRBasicSettingsProps) => {
             <SelectValue placeholder="Select gateway" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="moniepoint">Moniepoint</SelectItem>
-            <SelectItem value="opay">Opay</SelectItem>
-            <SelectItem value="palmpay">Palmpay</SelectItem>
+            {enabledGateways.length > 0 ? (
+              enabledGateways.map((gateway) => (
+                <SelectItem key={gateway.id} value={gateway.id}>
+                  {gateway.name}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="" disabled>
+                No enabled payment gateways
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
+        {enabledGateways.length === 0 && (
+          <p className="text-sm text-red-600 mt-1">
+            Please enable at least one payment gateway in Gateway Manager
+          </p>
+        )}
       </div>
     </div>
   );
