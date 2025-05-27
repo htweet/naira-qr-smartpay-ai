@@ -2,9 +2,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Settings } from "lucide-react";
 import QRBasicSettings from "./QRBasicSettings";
 import QRDesignSettings from "./QRDesignSettings";
+import QRAdvancedSettings from "./QRAdvancedSettings";
 import { useQRCodes } from "@/hooks/useQRCodes";
 
 interface QRCodeFormProps {
@@ -35,9 +36,10 @@ const QRCodeForm = ({ qrConfig, setQrConfig }: QRCodeFormProps) => {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Settings</TabsTrigger>
-            <TabsTrigger value="design">QR Code Settings</TabsTrigger>
+            <TabsTrigger value="design">Design</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
@@ -46,6 +48,10 @@ const QRCodeForm = ({ qrConfig, setQrConfig }: QRCodeFormProps) => {
 
           <TabsContent value="design" className="space-y-4">
             <QRDesignSettings qrConfig={qrConfig} setQrConfig={setQrConfig} />
+          </TabsContent>
+
+          <TabsContent value="advanced" className="space-y-4">
+            <QRAdvancedSettings qrConfig={qrConfig} setQrConfig={setQrConfig} />
           </TabsContent>
         </Tabs>
         

@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const QRScanner = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isScanning, setIsScanning] = useState(false);
+  const [isScanning, setIsScanning] = useState(false); // Changed to false by default
   const [qrCode, setQrCode] = useState('');
   const [manualCode, setManualCode] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({
@@ -22,9 +22,8 @@ const QRScanner = () => {
     qrCodeId: ''
   });
 
-  // Auto-start scanning when component mounts
+  // Removed auto-start scanning
   useEffect(() => {
-    startScanning();
     return () => {
       stopScanning();
     };
@@ -38,6 +37,10 @@ const QRScanner = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsScanning(true);
+        toast({
+          title: "Camera Started",
+          description: "Point your camera at a QR code to scan",
+        });
       }
     } catch (error) {
       console.error('Error starting camera:', error);
@@ -203,7 +206,8 @@ const QRScanner = () => {
                   <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
                     <div className="text-center">
                       <Camera className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                      <p className="text-gray-500">Camera preview</p>
+                      <p className="text-gray-500 mb-2">Camera ready to scan</p>
+                      <p className="text-xs text-gray-400">Click "Start Scanning" to begin</p>
                     </div>
                   </div>
                 )}
@@ -239,6 +243,11 @@ const QRScanner = () => {
               <Button onClick={handleManualEntry} className="w-full">
                 Process Code
               </Button>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  <strong>Tip:</strong> You can also paste QR code data directly here if you have it copied.
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>

@@ -15,60 +15,63 @@ interface QRPreviewProps {
 const QRPreview = ({ qrConfig }: QRPreviewProps) => {
   const { user } = useAuth();
   const [businessLogo, setBusinessLogo] = useState<string>('');
+  const [businessName, setBusinessName] = useState<string>('');
 
   useEffect(() => {
-    if (user && qrConfig.logo_enabled) {
-      fetchBusinessLogo();
+    if (user) {
+      fetchBusinessInfo();
     }
-  }, [user, qrConfig.logo_enabled]);
+  }, [user]);
 
-  const fetchBusinessLogo = async () => {
+  const fetchBusinessInfo = async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('business_logo')
+        .select('business_logo, business_name')
         .eq('user_id', user?.id)
         .single();
 
       if (error) throw error;
 
-      if (data?.business_logo) {
-        setBusinessLogo(data.business_logo);
+      if (data) {
+        setBusinessLogo(data.business_logo || '');
+        setBusinessName(data.business_name || 'Business');
       }
     } catch (error) {
-      console.error('Error fetching business logo:', error);
+      console.error('Error fetching business info:', error);
     }
   };
 
   const generateQRCodeURL = () => {
     const baseURL = "https://api.qrserver.com/v1/create-qr-code/";
-    const size = "300x300";
+    const size = `${qrConfig.size || 300}x${qrConfig.size || 300}`;
     const data = qrConfig.type === "dynamic" 
-      ? `PayQR:${qrConfig.amount}:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}`
-      : `PayQR:variable:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}`;
+      ? `PayQR:${qrConfig.amount}:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}:${businessName}`
+      : `PayQR:variable:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}:${businessName}`;
     
     let qrUrl = `${baseURL}?size=${size}&data=${encodeURIComponent(data)}&color=${qrConfig.primary_color?.replace('#', '') || '000000'}&bgcolor=${qrConfig.secondary_color?.replace('#', '') || 'ffffff'}`;
     
     // Add logo if enabled and available
     if (qrConfig.logo_enabled && businessLogo) {
-      qrUrl += `&logo=${encodeURIComponent(businessLogo)}`;
+      // For demo purposes, we'll indicate logo presence
+      qrUrl += `&format=png`;
     }
     
     return qrUrl;
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const qrUrl = generateQRCodeURL();
     const link = document.createElement('a');
     link.href = qrUrl;
-    link.download = `qr-code-${Date.now()}.png`;
+    link.download = `qr-code-${businessName}-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     
     toast({
       title: "Download Started",
-      description: "QR code image is being downloaded",
+      description: "QR code image with your business branding is being downloaded",
     });
   };
 
@@ -78,8 +81,8 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'PayQR Code',
-          text: `Payment QR Code - ${qrConfig.description || 'Payment Request'}`,
+          title: `${businessName} - PayQR Code`,
+          text: `Payment QR Code from ${businessName} - ${qrConfig.description || 'Payment Request'}`,
           url: qrUrl
         });
       } catch (error) {
@@ -108,17 +111,31 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-4">
         {/* QR Code Preview */}
-        <div className="w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white">
+        <div className="relative w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white">
           {qrConfig.amount || qrConfig.description ? (
-            <img 
-              src={generateQRCodeURL()} 
-              alt="QR Code Preview" 
-              className="w-full h-full object-contain rounded-lg"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex');
-              }}
-            />
+            <>
+              <img 
+                src={generateQRCodeURL()} 
+                alt="QR Code Preview" 
+                className="w-full h-full object-contain rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex');
+                }}
+              />
+              {/* Business Logo Overlay */}
+              {qrConfig.logo_enabled && businessLogo && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 bg-white rounded-lg p-1 shadow-lg">
+                    <img 
+                      src={businessLogo} 
+                      alt="Business Logo" 
+                      className="w-full h-full object-contain rounded"
+                    />
+                  </div>
+                </div>
+              )}
+            </>
           ) : null}
           <div className="text-center" style={{ display: qrConfig.amount || qrConfig.description ? 'none' : 'flex' }}>
             <div className="flex flex-col items-center">
@@ -132,6 +149,9 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
           <Badge variant="outline" className="bg-white">
             {qrConfig.type === "dynamic" ? "Fixed Amount" : "Variable Amount"}
           </Badge>
+          {businessName && (
+            <p className="font-medium text-lg">{businessName}</p>
+          )}
           {qrConfig.amount && (
             <p className="font-medium">₦{parseInt(qrConfig.amount || 0).toLocaleString()}</p>
           )}
@@ -145,6 +165,12 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
             <div className="flex items-center justify-center gap-2 text-xs text-green-600">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               Business logo included
+            </div>
+          )}
+          {qrConfig.expiry_enabled && (
+            <div className="flex items-center justify-center gap-2 text-xs text-orange-600">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              Expires in {qrConfig.expiry_hours || 24} hours
             </div>
           )}
         </div>

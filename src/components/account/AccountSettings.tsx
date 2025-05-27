@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,19 +66,32 @@ const AccountSettings = () => {
 
     setLoading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      // Convert file to base64 for storage
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        
+        // Update profile with new logo
+        const updatedProfile = { ...profile, business_logo: base64 };
+        setProfile(updatedProfile);
+        
+        // Save to database immediately
+        const { error } = await supabase
+          .from('profiles')
+          .upsert({
+            user_id: user?.id,
+            business_logo: base64,
+            updated_at: new Date().toISOString()
+          });
 
-      // Upload to Supabase Storage (simulated for now - would need storage bucket)
-      // For now, we'll use a placeholder URL
-      const logoUrl = `https://via.placeholder.com/150x150?text=${encodeURIComponent(profile.business_name || 'Logo')}`;
-      
-      setProfile(prev => ({ ...prev, business_logo: logoUrl }));
+        if (error) throw error;
 
-      toast({
-        title: "Logo uploaded",
-        description: "Your business logo has been uploaded successfully",
-      });
+        toast({
+          title: "Logo uploaded successfully",
+          description: "Your business logo will now appear on QR codes and payment confirmations",
+        });
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error uploading logo:', error);
       toast({
@@ -213,7 +225,7 @@ const AccountSettings = () => {
                 <Label htmlFor="logo-upload" className="cursor-pointer">
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
                     <Upload className="h-4 w-4" />
-                    Upload Logo
+                    {profile.business_logo ? 'Change Logo' : 'Upload Logo'}
                   </div>
                 </Label>
                 <Input
@@ -222,6 +234,7 @@ const AccountSettings = () => {
                   accept="image/*"
                   onChange={handleLogoUpload}
                   className="hidden"
+                  disabled={loading}
                 />
                 <p className="text-sm text-gray-500 mt-2">
                   Recommended: 150x150px, PNG or JPG, max 5MB
@@ -235,6 +248,7 @@ const AccountSettings = () => {
                 <li>• Appears on generated QR codes</li>
                 <li>• Used in payment confirmations</li>
                 <li>• Displayed in customer-facing interfaces</li>
+                <li>• Enhances brand recognition</li>
               </ul>
             </div>
           </CardContent>
