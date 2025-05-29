@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ const AccountSettings = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
 
   // Update form when profile loads
-  useEffect(() => {
+  React.useEffect(() => {
     if (profile) {
       setFormData({
         business_name: profile.business_name || '',

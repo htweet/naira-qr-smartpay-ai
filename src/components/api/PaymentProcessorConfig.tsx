@@ -1,6 +1,13 @@
+
 import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ProcessorConfigForm from "./ProcessorConfigForm";
+import { Eye, EyeOff, Save, TestTube, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface PaymentProcessor {
@@ -82,6 +89,7 @@ const PaymentProcessorConfig = () => {
 
   const saveConfiguration = async (processorId: string) => {
     try {
+      // Here you would typically save to your backend/database
       toast({
         title: "Configuration Saved",
         description: `${processors.find(p => p.id === processorId)?.name} configuration has been saved successfully.`,
@@ -99,7 +107,10 @@ const PaymentProcessorConfig = () => {
     setTesting(prev => ({ ...prev, [processorId]: true }));
     
     try {
+      // Simulate API test
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Random success/failure for demo
       const success = Math.random() > 0.3;
       
       setTestResults(prev => ({
@@ -145,17 +156,91 @@ const PaymentProcessorConfig = () => {
 
         {processors.map((processor) => (
           <TabsContent key={processor.id} value={processor.id}>
-            <ProcessorConfigForm
-              processor={processor}
-              configuration={configurations[processor.id]}
-              showSecrets={showSecrets}
-              testing={testing[processor.id] || false}
-              testResult={testResults[processor.id] || null}
-              onConfigChange={(field, value) => handleConfigChange(processor.id, field, value)}
-              onToggleSecret={(field) => toggleSecretVisibility(processor.id, field)}
-              onSave={() => saveConfiguration(processor.id)}
-              onTest={() => testConnection(processor.id)}
-            />
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      {processor.name}
+                      {testResults[processor.id] === 'success' && (
+                        <Badge variant="default" className="bg-green-100 text-green-800">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Connected
+                        </Badge>
+                      )}
+                      {testResults[processor.id] === 'error' && (
+                        <Badge variant="destructive">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Error
+                        </Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>{processor.description}</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => testConnection(processor.id)}
+                      disabled={testing[processor.id]}
+                    >
+                      <TestTube className="h-4 w-4 mr-2" />
+                      {testing[processor.id] ? "Testing..." : "Test Connection"}
+                    </Button>
+                    <Button onClick={() => saveConfiguration(processor.id)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {processor.fields.map((field) => (
+                  <div key={field.key} className="space-y-2">
+                    <Label htmlFor={`${processor.id}_${field.key}`}>
+                      {field.label}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id={`${processor.id}_${field.key}`}
+                        type={
+                          field.type === 'password' && !showSecrets[`${processor.id}_${field.key}`]
+                            ? 'password'
+                            : 'text'
+                        }
+                        placeholder={field.placeholder}
+                        value={configurations[processor.id]?.[field.key] || ''}
+                        onChange={(e) => handleConfigChange(processor.id, field.key, e.target.value)}
+                        className="pr-10"
+                      />
+                      {field.type === 'password' && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => toggleSecretVisibility(processor.id, field.key)}
+                        >
+                          {showSecrets[`${processor.id}_${field.key}`] ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Security Note</h4>
+                  <p className="text-sm text-blue-800">
+                    Your API credentials are encrypted and stored securely. Never share these 
+                    credentials or include them in client-side code.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         ))}
       </Tabs>
