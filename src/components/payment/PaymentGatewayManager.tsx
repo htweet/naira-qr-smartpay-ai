@@ -100,7 +100,7 @@ const PaymentGatewayManager = () => {
         setGateways(prev => prev.map(gateway => {
           const config = data.find(d => d.gateway_id === gateway.id);
           if (config) {
-            const credentials = config.api_credentials as ApiCredentials | null;
+            const credentials = config.api_credentials as unknown as ApiCredentials;
             return {
               ...gateway,
               enabled: config.enabled || false,

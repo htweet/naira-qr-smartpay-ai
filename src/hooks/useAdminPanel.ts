@@ -16,13 +16,23 @@ interface SystemSetting {
 interface MerchantData {
   id: string;
   business_name: string;
+  email?: string;
   created_at: string;
+  merchant_management?: Array<{
+    status: string;
+    verification_status: string;
+  }>;
 }
 
 interface CustomerData {
   id: string;
   business_name: string;
+  email?: string;
   created_at: string;
+  customer_management?: Array<{
+    status: string;
+    risk_level: string;
+  }>;
 }
 
 export const useAdminPanel = () => {
@@ -88,7 +98,12 @@ export const useAdminPanel = () => {
       setMerchants(data?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Unknown Business',
+        email: profile.user_id, // Using user_id as placeholder for email
         created_at: profile.created_at || new Date().toISOString(),
+        merchant_management: [{
+          status: 'active', // Default status
+          verification_status: 'pending' // Default verification status
+        }]
       })) || []);
     } catch (error) {
       console.error('Error loading merchants:', error);
@@ -106,7 +121,12 @@ export const useAdminPanel = () => {
       setCustomers(data?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Customer',
+        email: profile.user_id, // Using user_id as placeholder for email
         created_at: profile.created_at || new Date().toISOString(),
+        customer_management: [{
+          status: 'active', // Default status
+          risk_level: 'low' // Default risk level
+        }]
       })) || []);
     } catch (error) {
       console.error('Error loading customers:', error);
