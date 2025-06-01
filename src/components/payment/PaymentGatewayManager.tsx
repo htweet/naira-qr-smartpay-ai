@@ -14,6 +14,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import GatewaySettings from './GatewaySettings';
 
+interface ApiCredentials {
+  api_key: string;
+  secret_key: string;
+  merchant_id: string;
+}
+
 interface Gateway {
   id: string;
   name: string;
@@ -94,12 +100,13 @@ const PaymentGatewayManager = () => {
         setGateways(prev => prev.map(gateway => {
           const config = data.find(d => d.gateway_id === gateway.id);
           if (config) {
+            const credentials = config.api_credentials as ApiCredentials | null;
             return {
               ...gateway,
               enabled: config.enabled || false,
-              api_key: config.api_credentials?.api_key || '',
-              secret_key: config.api_credentials?.secret_key || '',
-              merchant_id: config.api_credentials?.merchant_id || '',
+              api_key: credentials?.api_key || '',
+              secret_key: credentials?.secret_key || '',
+              merchant_id: credentials?.merchant_id || '',
               environment: config.environment as 'live' | 'sandbox' || 'sandbox',
               status: config.enabled ? 'active' : 'inactive'
             };

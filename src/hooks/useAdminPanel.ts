@@ -16,23 +16,13 @@ interface SystemSetting {
 interface MerchantData {
   id: string;
   business_name: string;
-  email: string;
   created_at: string;
-  merchant_management?: Array<{
-    status: string;
-    verification_status: string;
-  }>;
 }
 
 interface CustomerData {
   id: string;
   business_name: string;
-  email: string;
   created_at: string;
-  customer_management?: Array<{
-    status: string;
-    risk_level: string;
-  }>;
 }
 
 export const useAdminPanel = () => {
@@ -91,20 +81,14 @@ export const useAdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('user_type', 'merchant');
+        .select('*');
 
       if (error) throw error;
 
       setMerchants(data?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Unknown Business',
-        email: profile.email || 'No email',
         created_at: profile.created_at || new Date().toISOString(),
-        merchant_management: [{
-          status: 'active',
-          verification_status: 'verified'
-        }]
       })) || []);
     } catch (error) {
       console.error('Error loading merchants:', error);
@@ -115,20 +99,14 @@ export const useAdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('user_type', 'customer');
+        .select('*');
 
       if (error) throw error;
 
       setCustomers(data?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Customer',
-        email: profile.email || 'No email',
         created_at: profile.created_at || new Date().toISOString(),
-        customer_management: [{
-          status: 'active',
-          risk_level: 'low'
-        }]
       })) || []);
     } catch (error) {
       console.error('Error loading customers:', error);

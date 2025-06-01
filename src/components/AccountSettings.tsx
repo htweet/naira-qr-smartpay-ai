@@ -12,7 +12,6 @@ import { toast } from '@/hooks/use-toast';
 
 interface Profile {
   business_name: string;
-  email: string;
   phone: string;
   address: string;
   website: string;
@@ -23,7 +22,6 @@ const AccountSettings = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile>({
     business_name: '',
-    email: '',
     phone: '',
     address: '',
     website: '',
@@ -55,18 +53,11 @@ const AccountSettings = () => {
       if (data) {
         setProfile({
           business_name: data.business_name || '',
-          email: data.email || user?.email || '',
           phone: data.phone || '',
           address: data.address || '',
           website: data.website || '',
           business_logo: data.business_logo || ''
         });
-      } else {
-        // Create profile if it doesn't exist
-        setProfile(prev => ({
-          ...prev,
-          email: user?.email || ''
-        }));
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -138,12 +129,10 @@ const AccountSettings = () => {
         .upsert({
           user_id: user.id,
           business_name: profile.business_name,
-          email: profile.email,
           phone: profile.phone,
           address: profile.address,
           website: profile.website,
           business_logo: profile.business_logo,
-          user_type: user.user_metadata?.user_type || 'merchant',
           updated_at: new Date().toISOString()
         });
 
@@ -233,9 +222,9 @@ const AccountSettings = () => {
               <Input
                 id="email"
                 type="email"
-                value={profile.email}
-                onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="Enter email address"
+                value={user?.email || ''}
+                disabled
+                placeholder="Email from account"
               />
             </div>
             <div>
