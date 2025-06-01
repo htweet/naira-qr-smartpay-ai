@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading";
 import MerchantDashboard from "@/components/MerchantDashboard";
-import CustomerDashboard from "@/components/CustomerDashboard";
+import CustomerDashboard from "@/components/customer/CustomerDashboard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,7 +82,7 @@ const Index = () => {
 
   // Customer Dashboard  
   if (isAuthenticated && user?.user_metadata?.user_type === 'customer') {
-    return <CustomerDashboard />;
+    return <CustomerDashboard user={user} />;
   }
 
   // Landing Page for non-authenticated users
