@@ -1,17 +1,37 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Settings, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import PaymentProcessorConfig from "@/components/api/PaymentProcessorConfig";
+import GatewayConfigModal from "./GatewayConfigModal";
 
 const AdminPaymentGateways = () => {
+  const [selectedGateway, setSelectedGateway] = useState<any>(null);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  
   const mockGateways = [
     { id: 'moniepoint', name: 'Moniepoint', status: 'active', merchants: 45, volume: '₦12.5M' },
     { id: 'opay', name: 'Opay', status: 'active', merchants: 32, volume: '₦8.2M' },
     { id: 'palmpay', name: 'Palmpay', status: 'maintenance', merchants: 18, volume: '₦3.1M' },
   ];
+
+  const handleConfigureGateway = (gateway: any) => {
+    setSelectedGateway(gateway);
+    setIsConfigModalOpen(true);
+  };
+
+  const handleCloseConfigModal = () => {
+    setIsConfigModalOpen(false);
+    setSelectedGateway(null);
+  };
+
+  const handleUpdateGateway = () => {
+    // Refresh gateway data
+    console.log('Gateway updated');
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -81,7 +101,11 @@ const AdminPaymentGateways = () => {
                   <TableCell>{gateway.merchants}</TableCell>
                   <TableCell>{gateway.volume}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleConfigureGateway(gateway)}
+                    >
                       <Settings className="h-3 w-3 mr-1" />
                       Configure
                     </Button>
@@ -104,6 +128,15 @@ const AdminPaymentGateways = () => {
           <PaymentProcessorConfig />
         </CardContent>
       </Card>
+
+      {selectedGateway && (
+        <GatewayConfigModal
+          gateway={selectedGateway}
+          isOpen={isConfigModalOpen}
+          onClose={handleCloseConfigModal}
+          onUpdate={handleUpdateGateway}
+        />
+      )}
     </div>
   );
 };

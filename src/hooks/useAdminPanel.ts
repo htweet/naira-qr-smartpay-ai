@@ -45,12 +45,15 @@ export const useAdminPanel = () => {
 
   useEffect(() => {
     checkAdminStatus();
+  }, [user]);
+
+  useEffect(() => {
     if (isAdmin) {
       loadMerchants();
       loadCustomers();
       loadSystemSettings();
     }
-  }, [user, isAdmin]);
+  }, [isAdmin]);
 
   const checkAdminStatus = async () => {
     if (!user) {
@@ -89,22 +92,28 @@ export const useAdminPanel = () => {
 
   const loadMerchants = async () => {
     try {
-      const { data, error } = await supabase
+      // Get profiles and their merchant management data
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      setMerchants(data?.map(profile => ({
+      const { data: merchantManagement, error: managementError } = await supabase
+        .from('merchant_management')
+        .select('*');
+
+      if (managementError) throw managementError;
+
+      const merchantsWithManagement = profiles?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Unknown Business',
         email: profile.user_id, // Using user_id as placeholder for email
         created_at: profile.created_at || new Date().toISOString(),
-        merchant_management: [{
-          status: 'active', // Default status
-          verification_status: 'pending' // Default verification status
-        }]
-      })) || []);
+        merchant_management: merchantManagement?.filter(m => m.user_id === profile.user_id) || []
+      })) || [];
+
+      setMerchants(merchantsWithManagement);
     } catch (error) {
       console.error('Error loading merchants:', error);
     }
@@ -112,50 +121,67 @@ export const useAdminPanel = () => {
 
   const loadCustomers = async () => {
     try {
-      const { data, error } = await supabase
+      // Get profiles and their customer management data
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      setCustomers(data?.map(profile => ({
+      const { data: customerManagement, error: managementError } = await supabase
+        .from('customer_management')
+        .select('*');
+
+      if (managementError) throw managementError;
+
+      const customersWithManagement = profiles?.map(profile => ({
         id: profile.id,
         business_name: profile.business_name || 'Customer',
         email: profile.user_id, // Using user_id as placeholder for email
         created_at: profile.created_at || new Date().toISOString(),
-        customer_management: [{
-          status: 'active', // Default status
-          risk_level: 'low' // Default risk level
-        }]
-      })) || []);
+        customer_management: customerManagement?.filter(c => c.user_id === profile.user_id) || []
+      })) || [];
+
+      setCustomers(customersWithManagement);
     } catch (error) {
       console.error('Error loading customers:', error);
     }
   };
 
   const loadSystemSettings = async () => {
-    // For now, return mock settings since the table doesn't exist yet
-    const mockSettings: SystemSetting[] = [
-      {
-        id: '1',
-        key: 'platform_name',
-        value: 'QR Payment Platform',
-        description: 'The name of the platform',
-        category: 'general',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      },
-      {
-        id: '2',
-        key: 'maintenance_mode',
-        value: 'false',
-        description: 'Enable maintenance mode',
-        category: 'system',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-    ];
-    setSystemSettings(mockSettings);
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .order('category', { ascending: true });
+
+      if (error) throw error;
+      setSystemSettings(data || []);
+    } catch (error) {
+      console.error('Error loading system settings:', error);
+      // Fallback to mock settings if table doesn't exist or has errors
+      const mockSettings: SystemSetting[] = [
+        {
+          id: '1',
+          key: 'platform_name',
+          value: 'QR Payment Platform',
+          description: 'The name of the platform',
+          category: 'general',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          key: 'maintenance_mode',
+          value: 'false',
+          description: 'Enable maintenance mode',
+          category: 'system',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      setSystemSettings(mockSettings);
+    }
   };
 
   const createSuperAdmin = async (email: string) => {
@@ -182,14 +208,35 @@ export const useAdminPanel = () => {
   };
 
   const updateSystemSetting = async (key: string, value: string) => {
-    // Mock implementation for now
-    setSystemSettings(prev => 
-      prev.map(setting => 
-        setting.key === key 
-          ? { ...setting, value, updated_at: new Date().toISOString() }
-          : setting
-      )
-    );
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key,
+          value,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setSystemSettings(prev => 
+        prev.map(setting => 
+          setting.key === key 
+            ? { ...setting, value, updated_at: new Date().toISOString() }
+            : setting
+        )
+      );
+    } catch (error) {
+      console.error('Error updating system setting:', error);
+      // Fallback to local update if database update fails
+      setSystemSettings(prev => 
+        prev.map(setting => 
+          setting.key === key 
+            ? { ...setting, value, updated_at: new Date().toISOString() }
+            : setting
+        )
+      );
+    }
   };
 
   return {

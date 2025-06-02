@@ -1,13 +1,31 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Eye, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
+import CustomerDetailModal from "./CustomerDetailModal";
 
 const AdminCustomers = () => {
-  const { customers } = useAdminPanel();
+  const { customers, loadCustomers } = useAdminPanel();
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleUpdateCustomer = () => {
+    loadCustomers();
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -93,7 +111,11 @@ const AdminCustomers = () => {
                   </TableCell>
                   <TableCell>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewCustomer(customer)}
+                    >
                       <Eye className="h-3 w-3 mr-1" />
                       View
                     </Button>
@@ -104,6 +126,15 @@ const AdminCustomers = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {selectedCustomer && (
+        <CustomerDetailModal
+          customer={selectedCustomer}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onUpdate={handleUpdateCustomer}
+        />
+      )}
     </div>
   );
 };

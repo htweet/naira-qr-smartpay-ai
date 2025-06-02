@@ -12,6 +12,7 @@ import AdminCustomers from "./AdminCustomers";
 import AdminSystemSettings from "./AdminSystemSettings";
 import AdminPaymentGateways from "./AdminPaymentGateways";
 import AdminAnalytics from "./AdminAnalytics";
+import DatabaseManagement from "./DatabaseManagement";
 
 const AdminPanel = () => {
   const { isAdmin, loading, createSuperAdmin } = useAdminPanel();
@@ -124,17 +125,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="database">
-            <Card>
-              <CardHeader>
-                <CardTitle>Database Management</CardTitle>
-                <CardDescription>
-                  Monitor and manage database performance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Database management tools coming soon...</p>
-              </CardContent>
-            </Card>
+            <DatabaseManagement />
           </TabsContent>
         </Tabs>
       </div>

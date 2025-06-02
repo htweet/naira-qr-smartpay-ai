@@ -1,13 +1,31 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Eye, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { useAdminPanel } from "@/hooks/useAdminPanel";
+import MerchantDetailModal from "./MerchantDetailModal";
 
 const AdminMerchants = () => {
-  const { merchants } = useAdminPanel();
+  const { merchants, loadMerchants } = useAdminPanel();
+  const [selectedMerchant, setSelectedMerchant] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewMerchant = (merchant: any) => {
+    setSelectedMerchant(merchant);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMerchant(null);
+  };
+
+  const handleUpdateMerchant = () => {
+    loadMerchants();
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -93,7 +111,11 @@ const AdminMerchants = () => {
                   </TableCell>
                   <TableCell>{new Date(merchant.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewMerchant(merchant)}
+                    >
                       <Eye className="h-3 w-3 mr-1" />
                       View
                     </Button>
@@ -104,6 +126,15 @@ const AdminMerchants = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {selectedMerchant && (
+        <MerchantDetailModal
+          merchant={selectedMerchant}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onUpdate={handleUpdateMerchant}
+        />
+      )}
     </div>
   );
 };

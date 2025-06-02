@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, EyeOff, Save, TestTube, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentProcessor {
   id: string;
@@ -67,6 +68,7 @@ const PaymentProcessorConfig = () => {
   const [configurations, setConfigurations] = useState<Record<string, any>>({});
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [testing, setTesting] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [testResults, setTestResults] = useState<Record<string, 'success' | 'error' | null>>({});
 
   const handleConfigChange = (processorId: string, field: string, value: string) => {
@@ -88,18 +90,39 @@ const PaymentProcessorConfig = () => {
   };
 
   const saveConfiguration = async (processorId: string) => {
+    setSaving(prev => ({ ...prev, [processorId]: true }));
     try {
-      // Here you would typically save to your backend/database
+      const processor = processors.find(p => p.id === processorId);
+      if (!processor) throw new Error('Processor not found');
+
+      const configData = configurations[processorId] || {};
+      
+      const { error } = await supabase
+        .from('payment_gateway_configs')
+        .upsert({
+          gateway_id: processorId,
+          gateway_name: processor.name,
+          api_credentials: configData,
+          enabled: true,
+          environment: 'sandbox',
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Configuration Saved",
-        description: `${processors.find(p => p.id === processorId)?.name} configuration has been saved successfully.`,
+        description: `${processor.name} configuration has been saved successfully.`,
       });
     } catch (error) {
+      console.error('Error saving configuration:', error);
       toast({
         title: "Save Failed",
         description: "Failed to save configuration. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(prev => ({ ...prev, [processorId]: false }));
     }
   };
 
@@ -186,9 +209,21 @@ const PaymentProcessorConfig = () => {
                       <TestTube className="h-4 w-4 mr-2" />
                       {testing[processor.id] ? "Testing..." : "Test Connection"}
                     </Button>
-                    <Button onClick={() => saveConfiguration(processor.id)}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save
+                    <Button 
+                      onClick={() => saveConfiguration(processor.id)}
+                      disabled={saving[processor.id]}
+                    >
+                      {saving[processor.id] ? (
+                        <>
+                          <Save className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

@@ -4,10 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/ui/loading";
 import MerchantDashboard from "@/components/MerchantDashboard";
 import CustomerDashboard from "@/components/customer/CustomerDashboard";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Rocket } from "lucide-react";
 import AdminPanel from "@/components/admin/AdminPanel";
 import { supabase } from "@/integrations/supabase/client";
 import HeroSection from "@/components/landing/HeroSection";
@@ -17,11 +13,17 @@ import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import PricingSection from "@/components/landing/PricingSection";
 import TestimonialSection from "@/components/landing/TestimonialSection";
 import FAQSection from "@/components/landing/FAQSection";
+import Header from "@/components/Header";
 
 const Index = () => {
   const { user, loading, isAuthenticated } = useAuth();
   const [merchant, setMerchant] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check URL parameters for view switching
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceAdmin = urlParams.get('admin') === 'true';
+  const forceMerchant = urlParams.get('merchant') === 'true';
 
   useEffect(() => {
     if (user) {
@@ -33,7 +35,7 @@ const Index = () => {
         createSuperAdminIfNeeded();
       }
 
-      if (userType === 'merchant') {
+      if (userType === 'merchant' || forceMerchant) {
         setMerchant({
           id: user.id,
           business_name: user.user_metadata?.business_name || 'My Business',
@@ -42,7 +44,7 @@ const Index = () => {
         });
       }
     }
-  }, [user]);
+  }, [user, forceMerchant]);
 
   const createSuperAdminIfNeeded = async () => {
     try {
@@ -75,31 +77,57 @@ const Index = () => {
     return <LoadingSpinner />;
   }
 
-  // Admin Panel Route
-  if (isAuthenticated && isAdmin) {
-    return <AdminPanel />;
+  // Landing Page for non-authenticated users
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <HeroSection />
+        <FeatureSection />
+        <PaymentGatewaySection />
+        <HowItWorksSection />
+        <PricingSection />
+        <TestimonialSection />
+        <FAQSection />
+      </div>
+    );
+  }
+
+  // Admin Panel Route (force admin or admin user)
+  if (isAuthenticated && (forceAdmin || (isAdmin && !forceMerchant))) {
+    return (
+      <div>
+        <Header />
+        <AdminPanel />
+      </div>
+    );
   }
 
   // Merchant Dashboard
-  if (isAuthenticated && merchant) {
-    return <MerchantDashboard merchant={merchant} />;
+  if (isAuthenticated && (merchant || forceMerchant)) {
+    return (
+      <div>
+        <Header />
+        <MerchantDashboard merchant={merchant} />
+      </div>
+    );
   }
 
   // Customer Dashboard  
   if (isAuthenticated && user?.user_metadata?.user_type === 'customer') {
-    return <CustomerDashboard user={user} />;
+    return (
+      <div>
+        <Header />
+        <CustomerDashboard user={user} />
+      </div>
+    );
   }
 
-  // Landing Page for non-authenticated users
+  // Default to customer view for authenticated users
   return (
-    <div className="min-h-screen bg-white">
-      <HeroSection />
-      <FeatureSection />
-      <PaymentGatewaySection />
-      <HowItWorksSection />
-      <PricingSection />
-      <TestimonialSection />
-      <FAQSection />
+    <div>
+      <Header />
+      <CustomerDashboard user={user} />
     </div>
   );
 };
