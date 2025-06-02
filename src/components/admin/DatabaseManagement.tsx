@@ -31,6 +31,18 @@ const DatabaseManagement = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Define valid table names to avoid TypeScript issues
+  const validTables = [
+    'profiles',
+    'qr_codes',
+    'payment_gateway_configs',
+    'customer_management',
+    'merchant_management',
+    'system_settings',
+    'database_logs',
+    'admin_users'
+  ];
+
   useEffect(() => {
     loadTables();
     loadLogs();
@@ -39,24 +51,31 @@ const DatabaseManagement = () => {
   const loadTables = async () => {
     setLoading(true);
     try {
-      // Get table information from information_schema
-      const { data, error } = await supabase
-        .rpc('get_table_info');
+      // For demo purposes, we'll use the existing tables with actual row counts
+      const tablePromises = validTables.map(async (tableName) => {
+        try {
+          const { count, error } = await supabase
+            .from(tableName as any)
+            .select('*', { count: 'exact', head: true });
+          
+          return {
+            name: tableName,
+            schema: 'public',
+            rows: count || 0,
+            size: `${Math.max(8192, (count || 0) * 1024)} bytes`
+          };
+        } catch (error) {
+          return {
+            name: tableName,
+            schema: 'public',
+            rows: 0,
+            size: '8192 bytes'
+          };
+        }
+      });
 
-      if (error) throw error;
-
-      // For demo purposes, we'll use the existing tables
-      const mockTables = [
-        { name: 'profiles', schema: 'public', rows: 0, size: '8192 bytes' },
-        { name: 'qr_codes', schema: 'public', rows: 0, size: '8192 bytes' },
-        { name: 'payment_gateway_configs', schema: 'public', rows: 0, size: '8192 bytes' },
-        { name: 'customer_management', schema: 'public', rows: 0, size: '8192 bytes' },
-        { name: 'merchant_management', schema: 'public', rows: 0, size: '8192 bytes' },
-        { name: 'system_settings', schema: 'public', rows: 5, size: '16384 bytes' },
-        { name: 'database_logs', schema: 'public', rows: 0, size: '8192 bytes' },
-      ];
-      
-      setTables(mockTables);
+      const tableResults = await Promise.all(tablePromises);
+      setTables(tableResults);
     } catch (error) {
       console.error('Error loading tables:', error);
       toast({
@@ -85,10 +104,19 @@ const DatabaseManagement = () => {
   };
 
   const loadTableData = async (tableName: string) => {
+    if (!validTables.includes(tableName)) {
+      toast({
+        title: "Error",
+        description: "Invalid table name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .limit(100);
 
@@ -128,11 +156,11 @@ const DatabaseManagement = () => {
   };
 
   const handleExportData = async () => {
-    if (!selectedTable) return;
+    if (!selectedTable || !validTables.includes(selectedTable)) return;
     
     try {
       const { data, error } = await supabase
-        .from(selectedTable)
+        .from(selectedTable as any)
         .select('*');
 
       if (error) throw error;

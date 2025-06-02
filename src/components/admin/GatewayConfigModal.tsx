@@ -18,6 +18,13 @@ interface GatewayConfigModalProps {
   onUpdate: () => void;
 }
 
+interface ApiCredentials {
+  api_key?: string;
+  secret_key?: string;
+  merchant_id?: string;
+  webhook_url?: string;
+}
+
 const GatewayConfigModal = ({ gateway, isOpen, onClose, onUpdate }: GatewayConfigModalProps) => {
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -51,13 +58,14 @@ const GatewayConfigModal = ({ gateway, isOpen, onClose, onUpdate }: GatewayConfi
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
+        const credentials = data.api_credentials as ApiCredentials || {};
         setFormData({
           enabled: data.enabled || false,
           environment: data.environment || 'sandbox',
-          api_key: data.api_credentials?.api_key || '',
-          secret_key: data.api_credentials?.secret_key || '',
-          merchant_id: data.api_credentials?.merchant_id || '',
-          webhook_url: data.api_credentials?.webhook_url || '',
+          api_key: credentials.api_key || '',
+          secret_key: credentials.secret_key || '',
+          merchant_id: credentials.merchant_id || '',
+          webhook_url: credentials.webhook_url || '',
           timeout_seconds: data.timeout_seconds || 30,
           max_retries: data.max_retries || 3,
           rate_limit: data.rate_limit || 1000,
