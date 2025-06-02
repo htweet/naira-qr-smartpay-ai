@@ -42,33 +42,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_users: {
-        Row: {
-          created_at: string
-          id: string
-          permissions: Json
-          role: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          permissions?: Json
-          role?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          permissions?: Json
-          role?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       conversion_events: {
         Row: {
           created_at: string
@@ -99,66 +72,6 @@ export type Database = {
         }
         Relationships: []
       }
-      customer_management: {
-        Row: {
-          created_at: string
-          id: string
-          notes: string | null
-          risk_level: string
-          status: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          notes?: string | null
-          risk_level?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          notes?: string | null
-          risk_level?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      database_logs: {
-        Row: {
-          action_type: string
-          admin_user_id: string | null
-          changes: Json | null
-          created_at: string
-          id: string
-          record_id: string | null
-          table_name: string | null
-        }
-        Insert: {
-          action_type: string
-          admin_user_id?: string | null
-          changes?: Json | null
-          created_at?: string
-          id?: string
-          record_id?: string | null
-          table_name?: string | null
-        }
-        Update: {
-          action_type?: string
-          admin_user_id?: string | null
-          changes?: Json | null
-          created_at?: string
-          id?: string
-          record_id?: string | null
-          table_name?: string | null
-        }
-        Relationships: []
-      }
       funnels: {
         Row: {
           created_at: string
@@ -183,39 +96,6 @@ export type Database = {
           name?: string
           steps?: Json
           updated_at?: string
-        }
-        Relationships: []
-      }
-      merchant_management: {
-        Row: {
-          business_type: string | null
-          created_at: string
-          id: string
-          status: string
-          updated_at: string
-          user_id: string | null
-          verification_notes: string | null
-          verification_status: string
-        }
-        Insert: {
-          business_type?: string | null
-          created_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-          verification_notes?: string | null
-          verification_status?: string
-        }
-        Update: {
-          business_type?: string | null
-          created_at?: string
-          id?: string
-          status?: string
-          updated_at?: string
-          user_id?: string | null
-          verification_notes?: string | null
-          verification_status?: string
         }
         Relationships: []
       }
@@ -491,36 +371,6 @@ export type Database = {
           stripe_subscription_id?: string | null
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      system_settings: {
-        Row: {
-          category: string
-          created_at: string
-          description: string | null
-          id: string
-          key: string
-          updated_at: string
-          value: string
-        }
-        Insert: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          key: string
-          updated_at?: string
-          value: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          key?: string
-          updated_at?: string
-          value?: string
         }
         Relationships: []
       }

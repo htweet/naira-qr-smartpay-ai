@@ -148,18 +148,14 @@ export const usePaymentGateways = () => {
     const newEnabled = !gateway.enabled;
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
       const { error } = await supabase
         .from('payment_gateway_configs')
         .upsert({
-          user_id: user.id,
           gateway_id: gatewayId,
           gateway_name: gateway.name,
           enabled: newEnabled,
         }, {
-          onConflict: 'gateway_id,user_id'
+          onConflict: 'gateway_id'
         });
 
       if (error) {
@@ -178,11 +174,11 @@ export const usePaymentGateways = () => {
         title: `${gateway.name} ${newEnabled ? 'Enabled' : 'Disabled'}`,
         description: `Payment gateway has been ${newEnabled ? 'activated' : 'deactivated'} successfully.`,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error toggling gateway:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update gateway status. Please try again.",
+        description: "Failed to update gateway status. Please try again.",
         variant: "destructive",
       });
     }
@@ -197,19 +193,15 @@ export const usePaymentGateways = () => {
         throw new Error("Gateway not found");
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No authenticated user');
-
       const { error } = await supabase
         .from('payment_gateway_configs')
         .upsert({
-          user_id: user.id,
           gateway_id: gatewayId,
           gateway_name: gateway.name,
           enabled: gateway.enabled,
           ...settings,
         }, {
-          onConflict: 'gateway_id,user_id'
+          onConflict: 'gateway_id'
         });
 
       if (error) {
