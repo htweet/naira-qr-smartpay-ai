@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -22,10 +21,22 @@ interface CustomerDetailModalProps {
 const CustomerDetailModal = ({ customer, isOpen, onClose, onUpdate }: CustomerDetailModalProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    status: customer.customer_management?.[0]?.status || 'active',
-    risk_level: customer.customer_management?.[0]?.risk_level || 'low',
-    notes: customer.customer_management?.[0]?.notes || '',
+    status: 'active',
+    risk_level: 'low',
+    notes: '',
   });
+
+  useEffect(() => {
+    if (customer && isOpen) {
+      // Set initial form data based on customer management data or defaults
+      const managementData = customer.customer_management?.[0];
+      setFormData({
+        status: managementData?.status || 'active',
+        risk_level: managementData?.risk_level || 'low',
+        notes: managementData?.notes || '',
+      });
+    }
+  }, [customer, isOpen]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -33,7 +44,7 @@ const CustomerDetailModal = ({ customer, isOpen, onClose, onUpdate }: CustomerDe
       const { error } = await supabase
         .from('customer_management')
         .upsert({
-          user_id: customer.id,
+          user_id: customer.user_id || customer.id,
           status: formData.status,
           risk_level: formData.risk_level,
           notes: formData.notes,
@@ -75,7 +86,7 @@ const CustomerDetailModal = ({ customer, isOpen, onClose, onUpdate }: CustomerDe
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Customer Details - {customer.business_name || 'Customer'}
+            Customer Details - {customer?.business_name || 'Customer'}
           </DialogTitle>
         </DialogHeader>
         
@@ -88,19 +99,19 @@ const CustomerDetailModal = ({ customer, isOpen, onClose, onUpdate }: CustomerDe
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Customer ID</Label>
-                  <p className="text-sm text-gray-600">{customer.id}</p>
+                  <p className="text-sm text-gray-600">{customer?.id}</p>
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <p className="text-sm text-gray-600">{customer.email || 'Not provided'}</p>
+                  <p className="text-sm text-gray-600">{customer?.email || 'Not provided'}</p>
                 </div>
                 <div>
                   <Label>Business Name</Label>
-                  <p className="text-sm text-gray-600">{customer.business_name || 'Not provided'}</p>
+                  <p className="text-sm text-gray-600">{customer?.business_name || 'Not provided'}</p>
                 </div>
                 <div>
                   <Label>Joined Date</Label>
-                  <p className="text-sm text-gray-600">{new Date(customer.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{customer?.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}</p>
                 </div>
               </div>
             </CardContent>

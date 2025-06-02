@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -21,11 +21,24 @@ interface MerchantDetailModalProps {
 const MerchantDetailModal = ({ merchant, isOpen, onClose, onUpdate }: MerchantDetailModalProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    status: merchant.merchant_management?.[0]?.status || 'pending',
-    verification_status: merchant.merchant_management?.[0]?.verification_status || 'pending',
-    business_type: merchant.merchant_management?.[0]?.business_type || '',
-    verification_notes: merchant.merchant_management?.[0]?.verification_notes || '',
+    status: 'pending',
+    verification_status: 'pending',
+    business_type: '',
+    verification_notes: '',
   });
+
+  useEffect(() => {
+    if (merchant && isOpen) {
+      // Set initial form data based on merchant management data or defaults
+      const managementData = merchant.merchant_management?.[0];
+      setFormData({
+        status: managementData?.status || 'pending',
+        verification_status: managementData?.verification_status || 'pending',
+        business_type: managementData?.business_type || '',
+        verification_notes: managementData?.verification_notes || '',
+      });
+    }
+  }, [merchant, isOpen]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -33,7 +46,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onUpdate }: MerchantDe
       const { error } = await supabase
         .from('merchant_management')
         .upsert({
-          user_id: merchant.id,
+          user_id: merchant.user_id || merchant.id,
           status: formData.status,
           verification_status: formData.verification_status,
           business_type: formData.business_type,
@@ -85,7 +98,7 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onUpdate }: MerchantDe
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Merchant Details - {merchant.business_name || 'Merchant'}
+            Merchant Details - {merchant?.business_name || 'Merchant'}
           </DialogTitle>
         </DialogHeader>
         
@@ -98,19 +111,19 @@ const MerchantDetailModal = ({ merchant, isOpen, onClose, onUpdate }: MerchantDe
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Merchant ID</Label>
-                  <p className="text-sm text-gray-600">{merchant.id}</p>
+                  <p className="text-sm text-gray-600">{merchant?.id}</p>
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <p className="text-sm text-gray-600">{merchant.email || 'Not provided'}</p>
+                  <p className="text-sm text-gray-600">{merchant?.email || 'Not provided'}</p>
                 </div>
                 <div>
                   <Label>Business Name</Label>
-                  <p className="text-sm text-gray-600">{merchant.business_name || 'Not provided'}</p>
+                  <p className="text-sm text-gray-600">{merchant?.business_name || 'Not provided'}</p>
                 </div>
                 <div>
                   <Label>Joined Date</Label>
-                  <p className="text-sm text-gray-600">{new Date(merchant.created_at).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">{merchant?.created_at ? new Date(merchant.created_at).toLocaleDateString() : 'N/A'}</p>
                 </div>
               </div>
             </CardContent>

@@ -17,34 +17,24 @@ import Header from "@/components/Header";
 
 const Index = () => {
   const { user, loading, isAuthenticated } = useAuth();
-  const [merchant, setMerchant] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check URL parameters for view switching
   const urlParams = new URLSearchParams(window.location.search);
   const forceAdmin = urlParams.get('admin') === 'true';
   const forceMerchant = urlParams.get('merchant') === 'true';
+  const forceCustomer = urlParams.get('customer') === 'true';
 
   useEffect(() => {
     if (user) {
-      const userType = user.user_metadata?.user_type || 'customer';
       const isAdminUser = user.email === 'htweet@gmail.com';
       
       if (isAdminUser) {
         setIsAdmin(true);
         createSuperAdminIfNeeded();
       }
-
-      if (userType === 'merchant' || forceMerchant) {
-        setMerchant({
-          id: user.id,
-          business_name: user.user_metadata?.business_name || 'My Business',
-          email: user.email,
-          created_at: user.created_at,
-        });
-      }
     }
-  }, [user, forceMerchant]);
+  }, [user]);
 
   const createSuperAdminIfNeeded = async () => {
     try {
@@ -94,7 +84,7 @@ const Index = () => {
   }
 
   // Admin Panel Route (force admin or admin user)
-  if (isAuthenticated && (forceAdmin || (isAdmin && !forceMerchant))) {
+  if (isAuthenticated && (forceAdmin || (isAdmin && !forceMerchant && !forceCustomer))) {
     return (
       <div>
         <Header />
@@ -104,7 +94,14 @@ const Index = () => {
   }
 
   // Merchant Dashboard
-  if (isAuthenticated && (merchant || forceMerchant)) {
+  if (isAuthenticated && (forceMerchant || (!forceAdmin && !forceCustomer && user?.user_metadata?.user_type === 'merchant'))) {
+    const merchant = {
+      id: user.id,
+      business_name: user.user_metadata?.business_name || 'My Business',
+      email: user.email,
+      created_at: user.created_at,
+    };
+
     return (
       <div>
         <Header />
@@ -113,17 +110,7 @@ const Index = () => {
     );
   }
 
-  // Customer Dashboard  
-  if (isAuthenticated && user?.user_metadata?.user_type === 'customer') {
-    return (
-      <div>
-        <Header />
-        <CustomerDashboard user={user} />
-      </div>
-    );
-  }
-
-  // Default to customer view for authenticated users
+  // Customer Dashboard - default for authenticated users
   return (
     <div>
       <Header />
