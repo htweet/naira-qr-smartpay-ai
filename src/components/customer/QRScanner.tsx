@@ -1,17 +1,16 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { QrCode, Camera, CameraOff, RefreshCw } from 'lucide-react';
+import { QrCode, Camera, CameraOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const QRScanner = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isScanning, setIsScanning] = useState(false); // Changed to false by default
+  const [isScanning, setIsScanning] = useState(false);
   const [qrCode, setQrCode] = useState('');
   const [manualCode, setManualCode] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({
@@ -22,7 +21,6 @@ const QRScanner = () => {
     qrCodeId: ''
   });
 
-  // Removed auto-start scanning
   useEffect(() => {
     return () => {
       stopScanning();
@@ -66,15 +64,16 @@ const QRScanner = () => {
     setQrCode(code);
     
     try {
-      // Try to fetch QR code details from database
       if (code.startsWith('PayQR:') || code.startsWith('QR')) {
         const qrId = code.includes(':') ? code.split(':')[1] : code;
         
-        const { data: qrData, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = supabase as any;
+        const { data: qrData, error } = await client
           .from('qr_codes')
-          .select('*')
+          .select('amount, description, gateway_id, qr_code_id')
           .or(`qr_code_id.eq.${qrId},id.eq.${qrId}`)
-          .single();
+          .maybeSingle();
 
         if (qrData && !error) {
           setPaymentDetails({
@@ -85,7 +84,6 @@ const QRScanner = () => {
             qrCodeId: qrData.qr_code_id
           });
         } else {
-          // Fallback to simulated data
           setPaymentDetails({
             amount: '₦5,000',
             description: 'Payment Request',
@@ -95,7 +93,6 @@ const QRScanner = () => {
           });
         }
       } else {
-        // Handle other QR code formats
         setPaymentDetails({
           amount: 'Variable Amount',
           description: 'Payment Request',
@@ -127,55 +124,26 @@ const QRScanner = () => {
   };
 
   const handlePayment = async () => {
-    try {
-      // Store payment attempt in database
-      const { error } = await supabase
-        .from('conversion_events')
-        .insert({
-          event_type: 'payment_initiated',
-          value: parseFloat(paymentDetails.amount.replace(/[₦,]/g, '')) || 0,
-          source: 'qr_scanner',
-          metadata: {
-            qr_code_id: paymentDetails.qrCodeId,
-            gateway: paymentDetails.gateway,
-            description: paymentDetails.description
-          }
-        });
-
-      if (error) {
-        console.error('Error logging payment:', error);
-      }
-
+    toast({
+      title: "Payment Initiated",
+      description: "Redirecting to payment gateway...",
+    });
+    
+    setTimeout(() => {
       toast({
-        title: "Payment Initiated",
-        description: "Redirecting to payment gateway...",
+        title: "Payment Successful",
+        description: `Payment of ${paymentDetails.amount} processed successfully`,
       });
       
-      // Simulate payment processing
-      setTimeout(() => {
-        toast({
-          title: "Payment Successful",
-          description: `Payment of ${paymentDetails.amount} processed successfully`,
-        });
-        
-        // Reset the form
-        setQrCode('');
-        setPaymentDetails({
-          amount: '',
-          description: '',
-          merchantName: '',
-          gateway: '',
-          qrCodeId: ''
-        });
-      }, 2000);
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast({
-        title: "Payment Failed",
-        description: "Please try again",
-        variant: "destructive",
+      setQrCode('');
+      setPaymentDetails({
+        amount: '',
+        description: '',
+        merchantName: '',
+        gateway: '',
+        qrCodeId: ''
       });
-    }
+    }, 2000);
   };
 
   return (
@@ -192,7 +160,6 @@ const QRScanner = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Camera Scanner */}
             <div className="space-y-4">
               <div className="relative">
                 <video
@@ -211,7 +178,6 @@ const QRScanner = () => {
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-0 border-2 border-dashed border-white rounded-lg opacity-50"></div>
               </div>
               
               <div className="flex gap-2">
@@ -229,7 +195,6 @@ const QRScanner = () => {
               </div>
             </div>
 
-            {/* Manual Entry */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="manual-code">Manual QR Code Entry</Label>
@@ -243,24 +208,15 @@ const QRScanner = () => {
               <Button onClick={handleManualEntry} className="w-full">
                 Process Code
               </Button>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  <strong>Tip:</strong> You can also paste QR code data directly here if you have it copied.
-                </p>
-              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Payment Details */}
       {qrCode && (
         <Card>
           <CardHeader>
             <CardTitle>Payment Details</CardTitle>
-            <CardDescription>
-              Review the payment information before proceeding
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -273,17 +229,6 @@ const QRScanner = () => {
                 <Badge variant="outline">{paymentDetails.gateway}</Badge>
               </div>
             </div>
-            
-            <div>
-              <Label>Merchant</Label>
-              <p className="font-medium">{paymentDetails.merchantName}</p>
-            </div>
-            
-            <div>
-              <Label>Description</Label>
-              <p className="text-gray-600">{paymentDetails.description}</p>
-            </div>
-
             <Button onClick={handlePayment} className="w-full" size="lg">
               Proceed to Payment
             </Button>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -40,40 +39,28 @@ export interface QRCodeConfig {
   error_correction: string;
 }
 
-// Transform database row to QRCodeData
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const transformDatabaseRow = (row: any): QRCodeData => ({
   id: row.id,
   qr_code_id: row.qr_code_id,
-  type: row.type as "static" | "dynamic", // Type assertion
-  amount: row.amount,
-  description: row.description,
-  reference: row.reference,
-  gateway_id: row.gateway_id,
-  primary_color: row.primary_color,
-  secondary_color: row.secondary_color,
-  logo_enabled: row.logo_enabled,
-  eye_style: row.eye_style,
-  pattern: row.pattern,
-  frame_style: row.frame_style,
-  error_correction: row.error_correction,
-  scans: row.scans,
-  payments: row.payments,
-  revenue: row.revenue,
+  type: row.type as "static" | "dynamic",
+  amount: row.amount ?? undefined,
+  description: row.description ?? undefined,
+  reference: row.reference ?? undefined,
+  gateway_id: row.gateway_id ?? undefined,
+  primary_color: row.primary_color || '#000000',
+  secondary_color: row.secondary_color || '#ffffff',
+  logo_enabled: row.logo_enabled ?? false,
+  eye_style: row.eye_style || 'square',
+  pattern: row.pattern || 'squares',
+  frame_style: row.frame_style || 'none',
+  error_correction: row.error_correction || 'M',
+  scans: row.scans ?? 0,
+  payments: row.payments ?? 0,
+  revenue: row.revenue ?? 0,
   created_at: row.created_at,
   updated_at: row.updated_at,
 });
-
-// Transform QRCodeConfig to database format
-const transformConfigToDatabase = (config: Partial<QRCodeConfig>) => {
-  const dbUpdate: any = { ...config };
-  
-  // Convert amount string to number if present
-  if (config.amount !== undefined) {
-    dbUpdate.amount = config.amount ? parseFloat(config.amount) : null;
-  }
-  
-  return dbUpdate;
-};
 
 export const useQRCodes = () => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
@@ -81,14 +68,15 @@ export const useQRCodes = () => {
 
   const fetchQRCodes = async () => {
     try {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { data, error } = await client
         .from('qr_codes')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to match our interface
       const transformedData = data?.map(transformDatabaseRow) || [];
       setQrCodes(transformedData);
     } catch (error) {
@@ -107,7 +95,9 @@ export const useQRCodes = () => {
     try {
       const qrCodeId = `QR${Date.now()}`;
       
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { data, error } = await client
         .from('qr_codes')
         .insert({
           qr_code_id: qrCodeId,
@@ -128,8 +118,8 @@ export const useQRCodes = () => {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('No data returned');
 
-      // Transform and add to state
       const transformedQR = transformDatabaseRow(data);
       setQrCodes(prev => [transformedQR, ...prev]);
 
@@ -152,10 +142,14 @@ export const useQRCodes = () => {
 
   const updateQRCode = async (id: string, updates: Partial<QRCodeConfig>) => {
     try {
-      // Transform the config data to database format
-      const dbUpdates = transformConfigToDatabase(updates);
+      const dbUpdates: Record<string, unknown> = { ...updates };
+      if (updates.amount !== undefined) {
+        dbUpdates.amount = updates.amount ? parseFloat(updates.amount) : null;
+      }
       
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { data, error } = await client
         .from('qr_codes')
         .update(dbUpdates)
         .eq('id', id)
@@ -163,8 +157,8 @@ export const useQRCodes = () => {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('No data returned');
 
-      // Transform and update state
       const transformedQR = transformDatabaseRow(data);
       setQrCodes(prev => prev.map(qr => qr.id === id ? transformedQR : qr));
 
@@ -187,7 +181,9 @@ export const useQRCodes = () => {
 
   const deleteQRCode = async (id: string) => {
     try {
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { error } = await client
         .from('qr_codes')
         .delete()
         .eq('id', id);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface QRPreviewProps {
-  qrConfig: any;
+  qrConfig: {
+    type?: string;
+    amount?: string | number;
+    description?: string;
+    gateway_id?: string;
+    size?: number;
+    primary_color?: string;
+    secondary_color?: string;
+    logo_enabled?: boolean;
+    expiry_enabled?: boolean;
+    expiry_hours?: number;
+  };
 }
 
 const QRPreview = ({ qrConfig }: QRPreviewProps) => {
@@ -25,11 +35,13 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
 
   const fetchBusinessInfo = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { data, error } = await client
+        .from('merchants')
         .select('business_logo, business_name')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -49,15 +61,7 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
       ? `PayQR:${qrConfig.amount}:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}:${businessName}`
       : `PayQR:variable:${qrConfig.description || 'Payment'}:${qrConfig.gateway_id || 'moniepoint'}:${businessName}`;
     
-    let qrUrl = `${baseURL}?size=${size}&data=${encodeURIComponent(data)}&color=${qrConfig.primary_color?.replace('#', '') || '000000'}&bgcolor=${qrConfig.secondary_color?.replace('#', '') || 'ffffff'}`;
-    
-    // Add logo if enabled and available
-    if (qrConfig.logo_enabled && businessLogo) {
-      // For demo purposes, we'll indicate logo presence
-      qrUrl += `&format=png`;
-    }
-    
-    return qrUrl;
+    return `${baseURL}?size=${size}&data=${encodeURIComponent(data)}&color=${qrConfig.primary_color?.replace('#', '') || '000000'}&bgcolor=${qrConfig.secondary_color?.replace('#', '') || 'ffffff'}&format=png`;
   };
 
   const handleDownload = async () => {
@@ -69,10 +73,7 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
     link.click();
     document.body.removeChild(link);
     
-    toast({
-      title: "Download Started",
-      description: "QR code image with your business branding is being downloaded",
-    });
+    toast({ title: "Download Started", description: "QR code image is being downloaded" });
   };
 
   const handleShare = async () => {
@@ -82,19 +83,15 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
       try {
         await navigator.share({
           title: `${businessName} - PayQR Code`,
-          text: `Payment QR Code from ${businessName} - ${qrConfig.description || 'Payment Request'}`,
+          text: `Payment QR Code from ${businessName}`,
           url: qrUrl
         });
-      } catch (error) {
-        console.log('Share was aborted');
+      } catch {
+        console.log('Share aborted');
       }
     } else {
-      // Fallback to copying URL to clipboard
       navigator.clipboard.writeText(qrUrl);
-      toast({
-        title: "Link Copied",
-        description: "QR code link copied to clipboard",
-      });
+      toast({ title: "Link Copied", description: "QR code link copied to clipboard" });
     }
   };
 
@@ -105,84 +102,32 @@ const QRPreview = ({ qrConfig }: QRPreviewProps) => {
           <Eye className="h-5 w-5" />
           Live Preview
         </CardTitle>
-        <CardDescription>
-          See how your QR code will look with your business branding
-        </CardDescription>
+        <CardDescription>See how your QR code will look</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-4">
-        {/* QR Code Preview */}
         <div className="relative w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-white">
           {qrConfig.amount || qrConfig.description ? (
-            <>
-              <img 
-                src={generateQRCodeURL()} 
-                alt="QR Code Preview" 
-                className="w-full h-full object-contain rounded-lg"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.setAttribute('style', 'display: flex');
-                }}
-              />
-              {/* Business Logo Overlay */}
-              {qrConfig.logo_enabled && businessLogo && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-12 h-12 bg-white rounded-lg p-1 shadow-lg">
-                    <img 
-                      src={businessLogo} 
-                      alt="Business Logo" 
-                      className="w-full h-full object-contain rounded"
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          ) : null}
-          <div className="text-center" style={{ display: qrConfig.amount || qrConfig.description ? 'none' : 'flex' }}>
-            <div className="flex flex-col items-center">
+            <img src={generateQRCodeURL()} alt="QR Code" className="w-full h-full object-contain rounded-lg" />
+          ) : (
+            <div className="text-center flex flex-col items-center">
               <QrCode className="h-16 w-16 mb-2 text-gray-400" />
               <p className="text-sm text-gray-500">Configure settings to preview</p>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="text-center space-y-2">
-          <Badge variant="outline" className="bg-white">
-            {qrConfig.type === "dynamic" ? "Fixed Amount" : "Variable Amount"}
-          </Badge>
-          {businessName && (
-            <p className="font-medium text-lg">{businessName}</p>
-          )}
-          {qrConfig.amount && (
-            <p className="font-medium">₦{parseInt(qrConfig.amount || 0).toLocaleString()}</p>
-          )}
-          {qrConfig.description && (
-            <p className="text-sm text-gray-600">{qrConfig.description}</p>
-          )}
-          {qrConfig.gateway_id && (
-            <Badge variant="secondary">{qrConfig.gateway_id}</Badge>
-          )}
-          {qrConfig.logo_enabled && businessLogo && (
-            <div className="flex items-center justify-center gap-2 text-xs text-green-600">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              Business logo included
-            </div>
-          )}
-          {qrConfig.expiry_enabled && (
-            <div className="flex items-center justify-center gap-2 text-xs text-orange-600">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              Expires in {qrConfig.expiry_hours || 24} hours
-            </div>
-          )}
+          <Badge variant="outline">{qrConfig.type === "dynamic" ? "Fixed Amount" : "Variable Amount"}</Badge>
+          {businessName && <p className="font-medium text-lg">{businessName}</p>}
+          {qrConfig.amount && <p className="font-medium">₦{parseInt(String(qrConfig.amount) || '0').toLocaleString()}</p>}
         </div>
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1" />
-            Download
+            <Download className="h-4 w-4 mr-1" /> Download
           </Button>
           <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-1" />
-            Share
+            <Share2 className="h-4 w-4 mr-1" /> Share
           </Button>
         </div>
       </CardContent>
