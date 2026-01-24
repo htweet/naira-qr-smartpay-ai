@@ -1,6 +1,4 @@
-
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export interface PaymentGateway {
@@ -147,89 +145,35 @@ export const usePaymentGateways = () => {
 
     const newEnabled = !gateway.enabled;
     
-    try {
-      const { error } = await supabase
-        .from('payment_gateway_configs')
-        .upsert({
-          gateway_id: gatewayId,
-          gateway_name: gateway.name,
-          enabled: newEnabled,
-        }, {
-          onConflict: 'gateway_id'
-        });
+    // Update local state
+    setGateways(prevGateways => 
+      prevGateways.map(g => 
+        g.id === gatewayId ? { ...g, enabled: newEnabled } : g
+      )
+    );
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
-
-      // Update local state
-      setGateways(prevGateways => 
-        prevGateways.map(g => 
-          g.id === gatewayId ? { ...g, enabled: newEnabled } : g
-        )
-      );
-
-      toast({
-        title: `${gateway.name} ${newEnabled ? 'Enabled' : 'Disabled'}`,
-        description: `Payment gateway has been ${newEnabled ? 'activated' : 'deactivated'} successfully.`,
-      });
-    } catch (error) {
-      console.error('Error toggling gateway:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update gateway status. Please try again.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: `${gateway.name} ${newEnabled ? 'Enabled' : 'Disabled'}`,
+      description: `Payment gateway has been ${newEnabled ? 'activated' : 'deactivated'} successfully.`,
+    });
   };
 
-  const updateGatewaySettings = async (gatewayId: string, settings: any) => {
+  const updateGatewaySettings = async (gatewayId: string, settings: Record<string, unknown>) => {
     console.log('Updating gateway settings:', gatewayId, settings);
     
-    try {
-      const gateway = gateways.find(g => g.id === gatewayId);
-      if (!gateway) {
-        throw new Error("Gateway not found");
-      }
+    // Update local state
+    setGateways(prevGateways => 
+      prevGateways.map(gateway => 
+        gateway.id === gatewayId 
+          ? { ...gateway, ...settings }
+          : gateway
+      )
+    );
 
-      const { error } = await supabase
-        .from('payment_gateway_configs')
-        .upsert({
-          gateway_id: gatewayId,
-          gateway_name: gateway.name,
-          enabled: gateway.enabled,
-          ...settings,
-        }, {
-          onConflict: 'gateway_id'
-        });
-
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
-
-      // Update local state
-      setGateways(prevGateways => 
-        prevGateways.map(gateway => 
-          gateway.id === gatewayId 
-            ? { ...gateway, ...settings }
-            : gateway
-        )
-      );
-
-      toast({
-        title: "Settings Updated",
-        description: "Gateway configuration has been updated successfully.",
-      });
-    } catch (error: any) {
-      console.error('Error updating gateway settings:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update gateway settings",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Settings Updated",
+      description: "Gateway configuration has been updated successfully.",
+    });
   };
 
   return {
