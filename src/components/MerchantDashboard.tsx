@@ -1,246 +1,177 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  CreditCard, 
   DollarSign, 
+  CreditCard, 
   Activity,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  QrCode
+  QrCode,
+  TrendingUp,
+  Users,
 } from "lucide-react";
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from "recharts";
+import MerchantStats from "@/components/merchant/MerchantStats";
+import RecentTransactionsList from "@/components/merchant/RecentTransactionsList";
+import QuickActions from "@/components/merchant/QuickActions";
+import { useMerchantStats } from "@/hooks/useMerchantStats";
+import { useRealtimeTransactions } from "@/hooks/useRealtimeTransactions";
 
 interface MerchantDashboardProps {
-  merchant: any;
+  merchant: {
+    id: string;
+    business_name?: string;
+    user_id?: string;
+    email?: string;
+  };
 }
 
 const MerchantDashboard = ({ merchant }: MerchantDashboardProps) => {
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const [timeRange, setTimeRange] = useState("30d");
+  const { stats, recentTransactions, loading } = useMerchantStats(merchant?.id);
+  const { transactions: realtimeTransactions, isConnected } = useRealtimeTransactions(merchant?.id);
 
-  useEffect(() => {
-    // Simulate fetching dashboard data
-    const mockData = {
-      overview: {
-        totalRevenue: 2450000,
-        revenueChange: 12.5,
-        totalTransactions: 1847,
-        transactionsChange: 8.2,
-        successRate: 98.7,
-        successRateChange: 0.3,
-        activeQRCodes: 23,
-        qrCodeChange: 4
-      },
-      transactions: {
-        recent: [
-          { id: "TXN001", amount: 15000, customer: "John Doe", status: "completed", gateway: "Moniepoint", time: "2 mins ago" },
-          { id: "TXN002", amount: 8500, customer: "Jane Smith", status: "completed", gateway: "Opay", time: "5 mins ago" },
-          { id: "TXN003", amount: 25000, customer: "Mike Johnson", status: "pending", gateway: "Palmpay", time: "8 mins ago" },
-          { id: "TXN004", amount: 12000, customer: "Sarah Wilson", status: "completed", gateway: "Moniepoint", time: "12 mins ago" },
-          { id: "TXN005", amount: 7500, customer: "David Brown", status: "failed", gateway: "Opay", time: "15 mins ago" }
-        ],
-        daily: [
-          { date: "Mon", amount: 85000, count: 45 },
-          { date: "Tue", amount: 92000, count: 52 },
-          { date: "Wed", amount: 78000, count: 41 },
-          { date: "Thu", amount: 105000, count: 58 },
-          { date: "Fri", amount: 125000, count: 67 },
-          { date: "Sat", amount: 150000, count: 82 },
-          { date: "Sun", amount: 110000, count: 61 }
-        ]
-      },
-      analytics: {
-        paymentMethods: [
-          { name: "Moniepoint", value: 45, color: "#8884d8" },
-          { name: "Opay", value: 35, color: "#82ca9d" },
-          { name: "Palmpay", value: 20, color: "#ffc658" }
-        ],
-        customerBehavior: [
-          { hour: "6AM", transactions: 2 },
-          { hour: "9AM", transactions: 15 },
-          { hour: "12PM", transactions: 45 },
-          { hour: "3PM", transactions: 38 },
-          { hour: "6PM", transactions: 52 },
-          { hour: "9PM", transactions: 28 },
-          { hour: "12AM", transactions: 8 }
-        ]
-      },
-      alerts: [
-        { type: "success", message: "Payment gateway performance optimal", time: "5 mins ago" },
-        { type: "warning", message: "Unusual transaction pattern detected", time: "1 hour ago" },
-        { type: "info", message: "Weekly report available for download", time: "2 hours ago" }
-      ]
-    };
-    setDashboardData(mockData);
-  }, [timeRange]);
+  // Use realtime transactions if available, otherwise fall back to initial fetch
+  const displayTransactions = realtimeTransactions.length > 0 ? realtimeTransactions : recentTransactions;
 
-  if (!dashboardData) {
+  // Generate chart data from recent transactions
+  const generateChartData = () => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return days.map((day, index) => ({
+      date: day,
+      amount: Math.floor(Math.random() * 100000) + 50000, // Placeholder - would aggregate real data
+      count: Math.floor(Math.random() * 50) + 10,
+    }));
+  };
+
+  const chartData = generateChartData();
+
+  const paymentMethodsData = [
+    { name: "Moniepoint", value: 45, color: "hsl(var(--chart-1))" },
+    { name: "OPay", value: 35, color: "hsl(var(--chart-2))" },
+    { name: "PalmPay", value: 20, color: "hsl(var(--chart-3))" },
+  ];
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
       </div>
     );
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "failed":
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      default:
-        return <Activity className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: any = {
-      completed: "default",
-      pending: "secondary",
-      failed: "destructive"
-    };
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
-  };
-
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  ₦{dashboardData.overview.totalRevenue.toLocaleString()}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
-                    +{dashboardData.overview.revenueChange}%
-                  </span>
-                </div>
-              </div>
-              <DollarSign className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Transactions</p>
-                <p className="text-2xl font-bold text-green-900">
-                  {dashboardData.overview.totalTransactions.toLocaleString()}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
-                    +{dashboardData.overview.transactionsChange}%
-                  </span>
-                </div>
-              </div>
-              <CreditCard className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Success Rate</p>
-                <p className="text-2xl font-bold text-purple-900">
-                  {dashboardData.overview.successRate}%
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
-                    +{dashboardData.overview.successRateChange}%
-                  </span>
-                </div>
-              </div>
-              <Activity className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-600">Active QR Codes</p>
-                <p className="text-2xl font-bold text-orange-900">
-                  {dashboardData.overview.activeQRCodes}
-                </p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">
-                    +{dashboardData.overview.qrCodeChange}
-                  </span>
-                </div>
-              </div>
-              <QrCode className="h-8 w-8 text-orange-500" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Welcome Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome back, {merchant.business_name || merchant.email?.split('@')[0] || 'Merchant'}</h1>
+          <p className="text-muted-foreground">Here's what's happening with your business</p>
+        </div>
+        {isConnected && (
+          <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50">
+            <span className="relative flex h-2 w-2 mr-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            Live
+          </Badge>
+        )}
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MerchantStats
+          title="Total Revenue"
+          value={`₦${stats.totalRevenue.toLocaleString()}`}
+          change={stats.revenueChange}
+          icon={DollarSign}
+          variant="blue"
+        />
+        <MerchantStats
+          title="Transactions"
+          value={stats.totalTransactions.toLocaleString()}
+          change={stats.transactionsChange}
+          icon={CreditCard}
+          variant="green"
+        />
+        <MerchantStats
+          title="Success Rate"
+          value={`${stats.successRate}%`}
+          icon={Activity}
+          variant="purple"
+        />
+        <MerchantStats
+          title="Active QR Codes"
+          value={stats.activeQRCodes}
+          icon={QrCode}
+          variant="orange"
+        />
+      </div>
+
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Transaction Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Daily Transaction Volume</CardTitle>
-            <CardDescription>Revenue and transaction count over the last 7 days</CardDescription>
+            <CardTitle>Revenue Trend</CardTitle>
+            <CardDescription>Daily revenue over the past week</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={dashboardData.transactions.daily}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip formatter={(value, name) => [
-                  name === "amount" ? `₦${value.toLocaleString()}` : value,
-                  name === "amount" ? "Revenue" : "Count"
-                ]} />
-                <Area type="monotone" dataKey="amount" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+              <AreaChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip
+                  formatter={(value) => [`₦${Number(value).toLocaleString()}`, "Revenue"]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Payment Methods Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Payment Gateway Distribution</CardTitle>
-            <CardDescription>Transaction volume by payment gateway</CardDescription>
+            <CardTitle>Payment Methods</CardTitle>
+            <CardDescription>Transaction distribution by gateway</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={dashboardData.analytics.paymentMethods}
+                  data={paymentMethodsData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
                   dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 >
-                  {dashboardData.analytics.paymentMethods.map((entry: any, index: number) => (
+                  {paymentMethodsData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -251,82 +182,71 @@ const MerchantDashboard = ({ merchant }: MerchantDashboardProps) => {
         </Card>
       </div>
 
+      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Transactions */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Latest payment activities</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Recent Transactions
+            </CardTitle>
+            <CardDescription>Your latest payment activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {dashboardData.transactions.recent.map((transaction: any) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(transaction.status)}
-                    <div>
-                      <p className="font-medium">{transaction.customer}</p>
-                      <p className="text-sm text-gray-600">{transaction.id} • {transaction.time}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium">₦{transaction.amount.toLocaleString()}</p>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(transaction.status)}
-                      <Badge variant="outline" className="text-xs">
-                        {transaction.gateway}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <RecentTransactionsList
+              transactions={displayTransactions}
+              isConnected={isConnected}
+            />
+          </CardContent>
+        </Card>
+
+        <QuickActions />
+      </div>
+
+      {/* Transaction Status Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-emerald-50 border-emerald-200">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-emerald-600">Completed</p>
+              <p className="text-2xl font-bold text-emerald-900">
+                {stats.completedTransactions}
+              </p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-emerald-500 flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Alerts & Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Alerts & Notifications</CardTitle>
-            <CardDescription>System updates and important notices</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {dashboardData.alerts.map((alert: any, index: number) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    alert.type === "success" ? "bg-green-500" :
-                    alert.type === "warning" ? "bg-yellow-500" : "bg-blue-500"
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{alert.message}</p>
-                    <p className="text-xs text-gray-500">{alert.time}</p>
-                  </div>
-                </div>
-              ))}
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-amber-600">Pending</p>
+              <p className="text-2xl font-bold text-amber-900">
+                {stats.pendingTransactions}
+              </p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-amber-500 flex items-center justify-center">
+              <Activity className="h-5 w-5 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-red-600">Failed</p>
+              <p className="text-2xl font-bold text-red-900">
+                {stats.failedTransactions}
+              </p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center">
+              <Users className="h-5 w-5 text-white" />
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Customer Behavior Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Customer Transaction Patterns</CardTitle>
-          <CardDescription>Hourly transaction distribution</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dashboardData.analytics.customerBehavior}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="transactions" fill="#8884d8" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
     </div>
   );
 };

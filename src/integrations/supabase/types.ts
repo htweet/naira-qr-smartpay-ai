@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversion_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          source: string | null
+          user_id: string | null
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          source?: string | null
+          user_id?: string | null
+          value?: number | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -121,6 +151,50 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateways: {
+        Row: {
+          api_key_encrypted: string | null
+          created_at: string
+          gateway_name: string
+          id: string
+          is_active: boolean | null
+          merchant_id: string
+          priority: number | null
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          gateway_name: string
+          id?: string
+          is_active?: boolean | null
+          merchant_id: string
+          priority?: number | null
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          created_at?: string
+          gateway_name?: string
+          id?: string
+          is_active?: boolean | null
+          merchant_id?: string
+          priority?: number | null
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -153,6 +227,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      qr_codes: {
+        Row: {
+          amount: number | null
+          created_at: string
+          description: string | null
+          error_correction: string | null
+          eye_style: string | null
+          frame_style: string | null
+          gateway_id: string | null
+          id: string
+          logo_enabled: boolean | null
+          merchant_id: string
+          pattern: string | null
+          payments: number | null
+          primary_color: string | null
+          qr_code_id: string
+          reference: string | null
+          revenue: number | null
+          scans: number | null
+          secondary_color: string | null
+          status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          error_correction?: string | null
+          eye_style?: string | null
+          frame_style?: string | null
+          gateway_id?: string | null
+          id?: string
+          logo_enabled?: boolean | null
+          merchant_id: string
+          pattern?: string | null
+          payments?: number | null
+          primary_color?: string | null
+          qr_code_id: string
+          reference?: string | null
+          revenue?: number | null
+          scans?: number | null
+          secondary_color?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          description?: string | null
+          error_correction?: string | null
+          eye_style?: string | null
+          frame_style?: string | null
+          gateway_id?: string | null
+          id?: string
+          logo_enabled?: boolean | null
+          merchant_id?: string
+          pattern?: string | null
+          payments?: number | null
+          primary_color?: string | null
+          qr_code_id?: string
+          reference?: string | null
+          revenue?: number | null
+          scans?: number | null
+          secondary_color?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_codes_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
@@ -213,6 +367,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_behavior: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
