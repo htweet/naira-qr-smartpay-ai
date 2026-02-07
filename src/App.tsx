@@ -13,6 +13,13 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { useEffect } from "react";
 import { trackPageView } from "./utils/tracker";
 
+// Admin imports
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import MerchantManagement from "./pages/admin/MerchantManagement";
+import CustomerManagement from "./pages/admin/CustomerManagement";
+import TransactionMonitor from "./pages/admin/TransactionMonitor";
+
 const queryClient = new QueryClient();
 
 const AppContent = () => {
@@ -27,6 +34,15 @@ const AppContent = () => {
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="merchants" element={<MerchantManagement />} />
+        <Route path="customers" element={<CustomerManagement />} />
+        <Route path="transactions" element={<TransactionMonitor />} />
+      </Route>
+      
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
