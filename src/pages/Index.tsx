@@ -1,25 +1,18 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { QrCode, TrendingUp, Shield, Zap, Users, CreditCard, BarChart3, Brain, ArrowRight, ChevronDown, Scan, Settings, Star, Building, Smartphone, Globe, CheckCircle, Eye } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { QrCode, TrendingUp, CreditCard, BarChart3, Brain, Settings, FileText } from "lucide-react";
 import MerchantDashboard from "@/components/MerchantDashboard";
 import QRCodeGenerator from "@/components/QRCodeGenerator";
 import PaymentGatewayManager from "@/components/PaymentGatewayManager";
 import AIAnalytics from "@/components/AIAnalytics";
 import RevenueModel from "@/components/RevenueModel";
-import FraudDetection from "@/components/FraudDetection";
 import Footer from "@/components/Footer";
-import QRScanner from "@/components/customer/QRScanner";
-import PaymentProcessorConfig from "@/components/api/PaymentProcessorConfig";
-import PricingPlans from "@/components/PricingPlans";
 import AccountSettings from "@/components/account/AccountSettings";
 import SubscriptionBilling from "@/components/subscription/SubscriptionBilling";
-import CustomerTransactions from "@/components/customer/CustomerTransactions";
+import AdvancedPayments from "@/components/payments/AdvancedPayments";
 import { useAuth } from "@/contexts/AuthContext";
 import { trackEvent, trackConversion } from "@/utils/tracker";
 import { useNavigate } from "react-router-dom";
@@ -179,34 +172,38 @@ const Index = () => {
         ) : (
           // Merchant Interface
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7 bg-white">
+            <TabsList className="grid w-full grid-cols-8 bg-white">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Dashboard
+                <span className="hidden lg:inline">Dashboard</span>
               </TabsTrigger>
               <TabsTrigger value="qr-generator" className="flex items-center gap-2">
                 <QrCode className="h-4 w-4" />
-                QR Codes
+                <span className="hidden lg:inline">QR Codes</span>
               </TabsTrigger>
               <TabsTrigger value="payments" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                Payments
+                <span className="hidden lg:inline">Gateways</span>
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden lg:inline">Advanced</span>
               </TabsTrigger>
               <TabsTrigger value="ai-analytics" className="flex items-center gap-2">
                 <Brain className="h-4 w-4" />
-                AI Analytics
+                <span className="hidden lg:inline">AI</span>
               </TabsTrigger>
               <TabsTrigger value="billing" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                Billing
+                <span className="hidden lg:inline">Billing</span>
               </TabsTrigger>
               <TabsTrigger value="revenue" className="flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                Revenue
+                <TrendingUp className="h-4 w-4" />
+                <span className="hidden lg:inline">Revenue</span>
               </TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
-                Settings
+                <span className="hidden lg:inline">Settings</span>
               </TabsTrigger>
             </TabsList>
 
@@ -220,6 +217,10 @@ const Index = () => {
 
             <TabsContent value="payments">
               <PaymentGatewayManager merchant={user} />
+            </TabsContent>
+
+            <TabsContent value="advanced">
+              <AdvancedPayments merchantId={user?.id} />
             </TabsContent>
 
             <TabsContent value="ai-analytics">

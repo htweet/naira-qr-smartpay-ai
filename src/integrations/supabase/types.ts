@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      currency_rates: {
+        Row: {
+          base_currency: string
+          id: string
+          rate: number
+          target_currency: string
+          updated_at: string
+        }
+        Insert: {
+          base_currency?: string
+          id?: string
+          rate: number
+          target_currency: string
+          updated_at?: string
+        }
+        Update: {
+          base_currency?: string
+          id?: string
+          rate?: number
+          target_currency?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -93,6 +117,227 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disputes: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          evidence: Json | null
+          id: string
+          merchant_id: string
+          reason: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          evidence?: Json | null
+          id?: string
+          merchant_id: string
+          reason: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          evidence?: Json | null
+          id?: string
+          merchant_id?: string
+          reason?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disputes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escrow: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          dispute_reason: string | null
+          id: string
+          merchant_id: string
+          release_conditions: string | null
+          release_date: string | null
+          released_at: string | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          dispute_reason?: string | null
+          id?: string
+          merchant_id: string
+          release_conditions?: string | null
+          release_date?: string | null
+          released_at?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          dispute_reason?: string | null
+          id?: string
+          merchant_id?: string
+          release_conditions?: string | null
+          release_date?: string | null
+          released_at?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escrow_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escrow_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          discount_amount: number | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          items: Json | null
+          merchant_id: string
+          notes: string | null
+          paid_at: string | null
+          recurring: boolean | null
+          recurring_interval: string | null
+          status: string | null
+          subtotal: number
+          tax_amount: number | null
+          tax_rate: number | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          discount_amount?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          items?: Json | null
+          merchant_id: string
+          notes?: string | null
+          paid_at?: string | null
+          recurring?: boolean | null
+          recurring_interval?: string | null
+          status?: string | null
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          discount_amount?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          items?: Json | null
+          merchant_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          recurring?: boolean | null
+          recurring_interval?: string | null
+          status?: string | null
+          subtotal?: number
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
@@ -308,6 +553,139 @@ export type Database = {
           },
         ]
       }
+      recurring_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          id: string
+          interval: string
+          last_payment_date: string | null
+          max_payments: number | null
+          merchant_id: string
+          metadata: Json | null
+          name: string
+          next_payment_date: string
+          status: string | null
+          total_payments: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          interval: string
+          last_payment_date?: string | null
+          max_payments?: number | null
+          merchant_id: string
+          metadata?: Json | null
+          name: string
+          next_payment_date: string
+          status?: string | null
+          total_payments?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          interval?: string
+          last_payment_date?: string | null
+          max_payments?: number | null
+          merchant_id?: string
+          metadata?: Json | null
+          name?: string
+          next_payment_date?: string
+          status?: string | null
+          total_payments?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_payments_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          merchant_id: string
+          percentage: number | null
+          processed_at: string | null
+          recipient_account: string | null
+          recipient_bank: string | null
+          recipient_merchant_id: string | null
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          merchant_id: string
+          percentage?: number | null
+          processed_at?: string | null
+          recipient_account?: string | null
+          recipient_bank?: string | null
+          recipient_merchant_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          percentage?: number | null
+          processed_at?: string | null
+          recipient_account?: string | null
+          recipient_bank?: string | null
+          recipient_merchant_id?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_payments_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_payments_recipient_merchant_id_fkey"
+            columns: ["recipient_merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_payments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
@@ -315,9 +693,12 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           description: string | null
+          exchange_rate: number | null
           id: string
           merchant_id: string
           metadata: Json | null
+          original_amount: number | null
+          original_currency: string | null
           payment_method: string | null
           reference: string | null
           status: string | null
@@ -329,9 +710,12 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           description?: string | null
+          exchange_rate?: number | null
           id?: string
           merchant_id: string
           metadata?: Json | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           reference?: string | null
           status?: string | null
@@ -343,9 +727,12 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           description?: string | null
+          exchange_rate?: number | null
           id?: string
           merchant_id?: string
           metadata?: Json | null
+          original_amount?: number | null
+          original_currency?: string | null
           payment_method?: string | null
           reference?: string | null
           status?: string | null

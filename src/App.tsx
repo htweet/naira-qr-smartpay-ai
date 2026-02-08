@@ -19,6 +19,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import MerchantManagement from "./pages/admin/MerchantManagement";
 import CustomerManagement from "./pages/admin/CustomerManagement";
 import TransactionMonitor from "./pages/admin/TransactionMonitor";
+import PlatformAnalytics from "./pages/admin/PlatformAnalytics";
+import SystemSettings from "./pages/admin/SystemSettings";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,8 @@ const AppContent = () => {
         <Route path="merchants" element={<MerchantManagement />} />
         <Route path="customers" element={<CustomerManagement />} />
         <Route path="transactions" element={<TransactionMonitor />} />
+        <Route path="analytics" element={<PlatformAnalytics />} />
+        <Route path="settings" element={<SystemSettings />} />
       </Route>
       
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
