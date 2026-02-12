@@ -14,6 +14,7 @@ import AccountSettings from "@/components/account/AccountSettings";
 import SubscriptionBilling from "@/components/subscription/SubscriptionBilling";
 import AdvancedPayments from "@/components/payments/AdvancedPayments";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMerchantRecord } from "@/hooks/useMerchantRecord";
 import { trackEvent, trackConversion } from "@/utils/tracker";
 import { useNavigate } from "react-router-dom";
 import PaymentGatewaySection from "@/components/landing/PaymentGatewaySection";
@@ -32,6 +33,9 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
+  const { merchant: merchantRecord, loading: merchantLoading } = useMerchantRecord(
+    user?.user_metadata?.user_type !== 'customer' ? user?.id : undefined
+  );
 
   useEffect(() => {
     trackEvent({
@@ -115,7 +119,7 @@ const Index = () => {
   }
 
   // If loading, show loading indicator
-  if (loading) {
+  if (loading || (userType !== 'customer' && merchantLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
@@ -208,11 +212,11 @@ const Index = () => {
             </TabsList>
 
             <TabsContent value="dashboard">
-              <MerchantDashboard merchant={user} />
+              <MerchantDashboard merchant={{ ...user, id: merchantRecord?.id || user?.id }} />
             </TabsContent>
 
             <TabsContent value="qr-generator">
-              <QRCodeGenerator merchant={user} />
+              <QRCodeGenerator merchant={user} merchantId={merchantRecord?.id} />
             </TabsContent>
 
             <TabsContent value="payments">
@@ -220,7 +224,7 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="advanced">
-              <AdvancedPayments merchantId={user?.id} />
+              <AdvancedPayments merchantId={merchantRecord?.id} />
             </TabsContent>
 
             <TabsContent value="ai-analytics">
