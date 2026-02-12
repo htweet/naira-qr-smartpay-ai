@@ -62,7 +62,7 @@ const transformDatabaseRow = (row: any): QRCodeData => ({
   updated_at: row.updated_at,
 });
 
-export const useQRCodes = () => {
+export const useQRCodes = (merchantId?: string) => {
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -70,10 +70,16 @@ export const useQRCodes = () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const client = supabase as any;
-      const { data, error } = await client
+      let query = client
         .from('qr_codes')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (merchantId) {
+        query = query.eq('merchant_id', merchantId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -95,17 +101,24 @@ export const useQRCodes = () => {
     try {
       const qrCodeId = `QR${Date.now()}`;
       
+      if (!merchantId) throw new Error("No merchant ID available");
+      
+      // gateway_id is UUID type - only pass valid UUIDs, otherwise null
+      const isValidUUID = (val: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+      const gatewayId = config.gateway_id && isValidUUID(config.gateway_id) ? config.gateway_id : null;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const client = supabase as any;
       const { data, error } = await client
         .from('qr_codes')
         .insert({
+          merchant_id: merchantId,
           qr_code_id: qrCodeId,
           type: config.type,
           amount: config.amount ? parseFloat(config.amount) : null,
           description: config.description || "Payment Request",
           reference: config.reference || qrCodeId,
-          gateway_id: config.gateway_id || null,
+          gateway_id: gatewayId,
           primary_color: config.primary_color,
           secondary_color: config.secondary_color,
           logo_enabled: config.logo_enabled,

@@ -129,17 +129,34 @@ const AccountSettings = () => {
     
     setLoading(true);
     try {
-      // Update profile
-      const { error: profileError } = await supabase
+      // Update profile - use update instead of upsert to avoid duplicate key
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: profile.full_name,
-          phone: profile.phone,
-          avatar_url: profile.avatar_url,
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: profile.full_name,
+            phone: profile.phone,
+            avatar_url: profile.avatar_url,
+          })
+          .eq('user_id', user.id);
+        if (profileError) throw profileError;
+      } else {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: profile.full_name,
+            phone: profile.phone,
+            avatar_url: profile.avatar_url,
+          });
+        if (profileError) throw profileError;
+      }
 
       // Update or create merchant if applicable
       if (isMerchant || merchant.business_name) {

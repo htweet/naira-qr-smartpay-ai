@@ -11,10 +11,11 @@ import { useQRCodes } from "@/hooks/useQRCodes";
 interface QRCodeFormProps {
   qrConfig: any;
   setQrConfig: (config: any) => void;
+  merchantId?: string;
 }
 
-const QRCodeForm = ({ qrConfig, setQrConfig }: QRCodeFormProps) => {
-  const { createQRCode } = useQRCodes();
+const QRCodeForm = ({ qrConfig, setQrConfig, merchantId }: QRCodeFormProps) => {
+  const { createQRCode } = useQRCodes(merchantId);
 
   const handleGenerate = async () => {
     try {

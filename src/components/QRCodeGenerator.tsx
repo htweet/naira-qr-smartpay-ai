@@ -7,10 +7,11 @@ import { useQRCodes } from "@/hooks/useQRCodes";
 
 interface QRCodeGeneratorProps {
   merchant: any;
+  merchantId?: string;
 }
 
-const QRCodeGenerator = ({ merchant }: QRCodeGeneratorProps) => {
-  const { qrCodes } = useQRCodes();
+const QRCodeGenerator = ({ merchant, merchantId }: QRCodeGeneratorProps) => {
+  const { qrCodes } = useQRCodes(merchantId);
   const [qrConfig, setQrConfig] = useState({
     type: "dynamic",
     amount: "",
@@ -29,7 +30,7 @@ const QRCodeGenerator = ({ merchant }: QRCodeGeneratorProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <QRCodeForm qrConfig={qrConfig} setQrConfig={setQrConfig} />
+        <QRCodeForm qrConfig={qrConfig} setQrConfig={setQrConfig} merchantId={merchantId} />
         <QRPreview qrConfig={qrConfig} />
       </div>
       <QRHistory generatedQRs={qrCodes} />
