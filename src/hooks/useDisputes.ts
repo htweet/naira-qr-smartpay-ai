@@ -14,6 +14,8 @@ export interface Dispute {
   evidence: Array<{ type: string; url: string; description: string }>;
   resolution_notes?: string;
   resolved_at?: string;
+  merchant_response?: string;
+  merchant_response_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -53,8 +55,8 @@ export const useDisputes = (merchantId: string | undefined, isAdmin = false) => 
       
       const transformed = (data || []).map((d) => ({
         ...d,
-        evidence: Array.isArray(d.evidence) ? d.evidence : [],
-      })) as Dispute[];
+        evidence: Array.isArray(d.evidence) ? d.evidence as unknown as Dispute["evidence"] : [],
+      })) as unknown as Dispute[];
       
       setDisputes(transformed);
     } catch (error) {
@@ -118,7 +120,7 @@ export const useDisputes = (merchantId: string | undefined, isAdmin = false) => 
       description: "Your dispute has been submitted for review",
     });
 
-    return dispute as Dispute;
+    return dispute as unknown as Dispute;
   };
 
   const updateDisputeStatus = async (
@@ -171,6 +173,23 @@ export const useDisputes = (merchantId: string | undefined, isAdmin = false) => 
     });
   };
 
+  const respondToDispute = async (id: string, response: string) => {
+    const { error } = await supabase
+      .from("disputes")
+      .update({
+        merchant_response: response,
+        merchant_response_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    toast({
+      title: "Response Submitted",
+      description: "Your response has been submitted to the dispute",
+    });
+  };
+
   const getDisputeStats = useCallback(() => {
     const open = disputes.filter((d) => d.status === "open").length;
     const underReview = disputes.filter((d) => d.status === "under_review").length;
@@ -189,6 +208,7 @@ export const useDisputes = (merchantId: string | undefined, isAdmin = false) => 
     createDispute,
     updateDisputeStatus,
     addEvidence,
+    respondToDispute,
     getDisputeStats,
     refetch: fetchDisputes,
   };
