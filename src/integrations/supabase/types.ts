@@ -133,6 +133,8 @@ export type Database = {
           evidence: Json | null
           id: string
           merchant_id: string
+          merchant_response: string | null
+          merchant_response_at: string | null
           reason: string
           resolution_notes: string | null
           resolved_at: string | null
@@ -148,6 +150,8 @@ export type Database = {
           evidence?: Json | null
           id?: string
           merchant_id: string
+          merchant_response?: string | null
+          merchant_response_at?: string | null
           reason: string
           resolution_notes?: string | null
           resolved_at?: string | null
@@ -163,6 +167,8 @@ export type Database = {
           evidence?: Json | null
           id?: string
           merchant_id?: string
+          merchant_response?: string | null
+          merchant_response_at?: string | null
           reason?: string
           resolution_notes?: string | null
           resolved_at?: string | null
@@ -277,6 +283,8 @@ export type Database = {
           merchant_id: string
           notes: string | null
           paid_at: string | null
+          recipient_email: string | null
+          recipient_name: string | null
           recurring: boolean | null
           recurring_interval: string | null
           status: string | null
@@ -298,6 +306,8 @@ export type Database = {
           merchant_id: string
           notes?: string | null
           paid_at?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           recurring?: boolean | null
           recurring_interval?: string | null
           status?: string | null
@@ -319,6 +329,8 @@ export type Database = {
           merchant_id?: string
           notes?: string | null
           paid_at?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           recurring?: boolean | null
           recurring_interval?: string | null
           status?: string | null
@@ -442,31 +454,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          notification_preferences: Json | null
           phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string | null
           updated_at?: string
           user_id?: string
