@@ -832,7 +832,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      payment_gateways_safe: {
+        Row: {
+          api_key_masked: string | null
+          created_at: string | null
+          gateway_name: string | null
+          id: string | null
+          is_active: boolean | null
+          merchant_id: string | null
+          priority: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key_masked?: never
+          created_at?: string | null
+          gateway_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          merchant_id?: string | null
+          priority?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key_masked?: never
+          created_at?: string | null
+          gateway_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          merchant_id?: string | null
+          priority?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_gateways_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
