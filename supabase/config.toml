@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.flutterwave-nqr]
 verify_jwt = false
+
+[functions.admin-create-user]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false

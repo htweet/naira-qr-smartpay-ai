@@ -150,7 +150,7 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4">
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 {user?.user_metadata?.subscriptionTier || "Free"} Plan
               </Badge>
@@ -158,6 +158,14 @@ const Index = () => {
                 <p className="font-medium">{user?.user_metadata?.business_name || user?.email}</p>
                 <p className="text-sm text-gray-600 capitalize">{userType}</p>
               </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate("/admin")}
+                className="text-primary border-primary/30 hover:bg-primary/5"
+              >
+                Admin Panel
+              </Button>
               <Button 
                 variant="ghost" 
                 size="sm"

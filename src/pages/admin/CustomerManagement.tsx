@@ -5,24 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import DataTable from "@/components/admin/DataTable";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Users, Eye, Edit, Trash } from "lucide-react";
+import { Plus, Users, Edit, Loader2 } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -43,176 +34,102 @@ const CustomerManagement = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    status: "",
-  });
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: "", email: "", phone: "", status: "" });
+  const [createForm, setCreateForm] = useState({ email: "", password: "", full_name: "", phone: "" });
 
   const fetchCustomers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("customers")
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      const { data, error } = await supabase.from("customers").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       setCustomers(data || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch customers",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to fetch customers", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
+  useEffect(() => { fetchCustomers(); }, []);
 
-  const handleView = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsViewOpen(true);
-  };
-
+  const handleView = (customer: Customer) => { setSelectedCustomer(customer); setIsViewOpen(true); };
   const handleEdit = (customer: Customer) => {
     setSelectedCustomer(customer);
-    setEditForm({
-      full_name: customer.full_name || "",
-      email: customer.email,
-      phone: customer.phone || "",
-      status: customer.status || "active",
-    });
+    setEditForm({ full_name: customer.full_name || "", email: customer.email, phone: customer.phone || "", status: customer.status || "active" });
     setIsEditOpen(true);
   };
 
   const handleUpdate = async () => {
     if (!selectedCustomer) return;
-
     try {
-      const { error } = await supabase
-        .from("customers")
-        .update({
-          full_name: editForm.full_name || null,
-          email: editForm.email,
-          phone: editForm.phone || null,
-          status: editForm.status,
-        })
-        .eq("id", selectedCustomer.id);
-
+      const { error } = await supabase.from("customers").update({
+        full_name: editForm.full_name || null, email: editForm.email, phone: editForm.phone || null, status: editForm.status,
+      }).eq("id", selectedCustomer.id);
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Customer updated successfully",
-      });
-
+      toast({ title: "Success", description: "Customer updated successfully" });
       setIsEditOpen(false);
       fetchCustomers();
     } catch (error) {
-      console.error("Error updating customer:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update customer",
-        variant: "destructive",
-      });
+      console.error("Error:", error);
+      toast({ title: "Error", description: "Failed to update customer", variant: "destructive" });
     }
   };
 
   const handleDelete = async (customer: Customer) => {
-    if (!confirm(`Are you sure you want to delete ${customer.full_name || customer.email}?`)) {
-      return;
-    }
-
+    if (!confirm(`Deactivate ${customer.full_name || customer.email}?`)) return;
     try {
-      const { error } = await supabase
-        .from("customers")
-        .update({ status: "deleted" })
-        .eq("id", customer.id);
-
+      const { error } = await supabase.from("customers").update({ status: "deleted" }).eq("id", customer.id);
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Customer deleted successfully",
-      });
-
+      toast({ title: "Success", description: "Customer deactivated" });
       fetchCustomers();
     } catch (error) {
-      console.error("Error deleting customer:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete customer",
-        variant: "destructive",
+      console.error("Error:", error);
+      toast({ title: "Error", description: "Failed to deactivate", variant: "destructive" });
+    }
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!createForm.email || !createForm.password) {
+      toast({ title: "Error", description: "Email and password are required", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke("admin-create-user", {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+        body: { email: createForm.email, password: createForm.password, user_type: "customer", full_name: createForm.full_name, phone: createForm.phone },
       });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Customer Created", description: `${createForm.full_name || createForm.email} has been registered` });
+      setIsCreateOpen(false);
+      setCreateForm({ email: "", password: "", full_name: "", phone: "" });
+      fetchCustomers();
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Failed to create customer";
+      toast({ title: "Error", description: msg, variant: "destructive" });
+    } finally {
+      setCreating(false);
     }
   };
 
   const columns = [
-    {
-      key: "full_name",
-      label: "Name",
-      render: (value: unknown) => String(value || "N/A"),
-    },
+    { key: "full_name", label: "Name", render: (v: unknown) => String(v || "N/A") },
     { key: "email", label: "Email" },
-    {
-      key: "phone",
-      label: "Phone",
-      render: (value: unknown) => String(value || "-"),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (value: unknown) => (
-        <Badge
-          variant={
-            value === "active"
-              ? "default"
-              : value === "inactive"
-              ? "secondary"
-              : "destructive"
-          }
-        >
-          {String(value || "unknown")}
-        </Badge>
-      ),
-    },
-    {
-      key: "total_spent",
-      label: "Total Spent",
-      render: (value: unknown) => `₦${Number(value || 0).toLocaleString()}`,
-    },
-    {
-      key: "total_transactions",
-      label: "Transactions",
-      render: (value: unknown) => Number(value || 0).toLocaleString(),
-    },
-    {
-      key: "created_at",
-      label: "Joined",
-      render: (value: unknown) => new Date(String(value)).toLocaleDateString(),
-    },
+    { key: "phone", label: "Phone", render: (v: unknown) => String(v || "-") },
+    { key: "status", label: "Status", render: (v: unknown) => <Badge variant={v === "active" ? "default" : v === "inactive" ? "secondary" : "destructive"}>{String(v || "unknown")}</Badge> },
+    { key: "total_spent", label: "Total Spent", render: (v: unknown) => `₦${Number(v || 0).toLocaleString()}` },
+    { key: "total_transactions", label: "Transactions", render: (v: unknown) => Number(v || 0).toLocaleString() },
+    { key: "created_at", label: "Joined", render: (v: unknown) => new Date(String(v)).toLocaleDateString() },
   ];
 
   const actions = [
-    {
-      label: "View Details",
-      onClick: (row: Record<string, unknown>) => handleView(row as unknown as Customer),
-    },
-    {
-      label: "Edit",
-      onClick: (row: Record<string, unknown>) => handleEdit(row as unknown as Customer),
-    },
-    {
-      label: "Delete",
-      onClick: (row: Record<string, unknown>) => handleDelete(row as unknown as Customer),
-      variant: "destructive" as const,
-    },
+    { label: "View Details", onClick: (row: Record<string, unknown>) => handleView(row as unknown as Customer) },
+    { label: "Edit", onClick: (row: Record<string, unknown>) => handleEdit(row as unknown as Customer) },
+    { label: "Deactivate", onClick: (row: Record<string, unknown>) => handleDelete(row as unknown as Customer), variant: "destructive" as const },
   ];
 
   return (
@@ -220,109 +137,63 @@ const CustomerManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Customer Management</h1>
-          <p className="text-muted-foreground">
-            Manage all registered customers
-          </p>
+          <p className="text-muted-foreground">Manage all registered customers</p>
         </div>
-        <Button disabled>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Customer
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Add Customer
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            All Customers ({customers.length})
-          </CardTitle>
-          <CardDescription>
-            View and manage customer accounts
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> All Customers ({customers.length})</CardTitle>
+          <CardDescription>View and manage customer accounts</CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={customers as unknown as Record<string, unknown>[]}
-            actions={actions}
-            loading={loading}
-            searchPlaceholder="Search customers..."
-          />
+          <DataTable columns={columns} data={customers as unknown as Record<string, unknown>[]} actions={actions} loading={loading} searchPlaceholder="Search customers..." />
         </CardContent>
       </Card>
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>Create a new customer account with login credentials</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2"><Label>Full Name</Label><Input value={createForm.full_name} onChange={(e) => setCreateForm({ ...createForm, full_name: e.target.value })} placeholder="John Doe" /></div>
+            <div className="space-y-2"><Label>Email *</Label><Input type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} placeholder="customer@example.com" /></div>
+            <div className="space-y-2"><Label>Password *</Label><Input type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} placeholder="Min 6 characters" /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={createForm.phone} onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })} placeholder="+234..." /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateCustomer} disabled={creating}>
+              {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Create Customer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* View Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Customer Details</DialogTitle>
-            <DialogDescription>
-              Full information about the customer
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Customer Details</DialogTitle></DialogHeader>
           {selectedCustomer && (
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Full Name</Label>
-                <p className="font-medium">{selectedCustomer.full_name || "N/A"}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Email</Label>
-                <p className="font-medium">{selectedCustomer.email}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Phone</Label>
-                <p className="font-medium">{selectedCustomer.phone || "-"}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Status</Label>
-                <Badge
-                  variant={
-                    selectedCustomer.status === "active"
-                      ? "default"
-                      : selectedCustomer.status === "inactive"
-                      ? "secondary"
-                      : "destructive"
-                  }
-                >
-                  {selectedCustomer.status || "unknown"}
-                </Badge>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Total Spent</Label>
-                <p className="font-medium">
-                  ₦{(selectedCustomer.total_spent || 0).toLocaleString()}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Total Transactions</Label>
-                <p className="font-medium">
-                  {(selectedCustomer.total_transactions || 0).toLocaleString()}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">User ID</Label>
-                <p className="font-mono text-sm">{selectedCustomer.user_id || "-"}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-muted-foreground">Joined</Label>
-                <p className="font-medium">
-                  {new Date(selectedCustomer.created_at).toLocaleDateString()}
-                </p>
-              </div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Full Name</Label><p className="font-medium">{selectedCustomer.full_name || "N/A"}</p></div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Email</Label><p className="font-medium">{selectedCustomer.email}</p></div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Phone</Label><p className="font-medium">{selectedCustomer.phone || "-"}</p></div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Status</Label><Badge variant={selectedCustomer.status === "active" ? "default" : "destructive"}>{selectedCustomer.status}</Badge></div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Total Spent</Label><p className="font-medium">₦{(selectedCustomer.total_spent || 0).toLocaleString()}</p></div>
+              <div className="space-y-1"><Label className="text-muted-foreground">Transactions</Label><p className="font-medium">{(selectedCustomer.total_transactions || 0).toLocaleString()}</p></div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewOpen(false)}>
-              Close
-            </Button>
-            <Button onClick={() => {
-              setIsViewOpen(false);
-              if (selectedCustomer) handleEdit(selectedCustomer);
-            }}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
+            <Button variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
+            <Button onClick={() => { setIsViewOpen(false); if (selectedCustomer) handleEdit(selectedCustomer); }}><Edit className="h-4 w-4 mr-2" /> Edit</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -330,65 +201,24 @@ const CustomerManagement = () => {
       {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Customer</DialogTitle>
-            <DialogDescription>
-              Update customer information
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Edit Customer</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input
-                value={editForm.full_name}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, full_name: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={editForm.email}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, email: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input
-                value={editForm.phone}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, phone: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={editForm.status}
-                onValueChange={(value) =>
-                  setEditForm({ ...editForm, status: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+            <div className="space-y-2"><Label>Full Name</Label><Input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Phone</Label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Status</Label>
+              <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="suspended">Suspended</SelectItem>
-                  <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
             <Button onClick={handleUpdate}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
