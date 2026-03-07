@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_history: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          payment_reference: string | null
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversion_events: {
         Row: {
           created_at: string
@@ -205,7 +252,9 @@ export type Database = {
           amount: number
           created_at: string
           currency: string | null
+          customer_email: string | null
           customer_id: string | null
+          customer_name: string | null
           dispute_reason: string | null
           id: string
           merchant_id: string
@@ -220,7 +269,9 @@ export type Database = {
           amount: number
           created_at?: string
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           dispute_reason?: string | null
           id?: string
           merchant_id: string
@@ -235,7 +286,9 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           dispute_reason?: string | null
           id?: string
           merchant_id?: string
@@ -576,7 +629,9 @@ export type Database = {
           amount: number
           created_at: string
           currency: string | null
+          customer_email: string | null
           customer_id: string | null
+          customer_name: string | null
           id: string
           interval: string
           last_payment_date: string | null
@@ -593,7 +648,9 @@ export type Database = {
           amount: number
           created_at?: string
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           id?: string
           interval: string
           last_payment_date?: string | null
@@ -610,7 +667,9 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string | null
+          customer_email?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           id?: string
           interval?: string
           last_payment_date?: string | null
@@ -644,6 +703,8 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          customer_email: string | null
+          customer_name: string | null
           id: string
           merchant_id: string
           percentage: number | null
@@ -657,6 +718,8 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
           merchant_id: string
           percentage?: number | null
@@ -670,6 +733,8 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
           id?: string
           merchant_id?: string
           percentage?: number | null
@@ -700,6 +765,62 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          current_period_start: string | null
+          flutterwave_tx_ref: string | null
+          id: string
+          interval: string
+          merchant_id: string | null
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          flutterwave_tx_ref?: string | null
+          id?: string
+          interval?: string
+          merchant_id?: string | null
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          flutterwave_tx_ref?: string | null
+          id?: string
+          interval?: string
+          merchant_id?: string | null
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
