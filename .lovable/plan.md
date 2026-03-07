@@ -1,169 +1,109 @@
 
-# Comprehensive Implementation Plan: PayQR Platform Enhancement
 
-## Status: ✅ PHASE 5-6 IMPLEMENTED
+## Implementation Plan: Remaining Features
 
-### Completed Items:
-- [x] Phase 1: Database Schema Foundation (qr_codes, user_behavior, conversion_events, payment_gateways tables)
-- [x] Phase 2: Auto-confirm email signups enabled
-- [x] Phase 3: Enhanced Merchant Dashboard with real-time data
-- [x] Phase 4: Admin Panel with full CRUD operations
-- [x] Phase 5: Supabase Realtime enabled for transactions, QR codes, invoices, disputes, escrow
-- [x] Phase 6 Priority 1: Complete QR Code Management System
-- [x] Phase 6 Priority 2: Multi-currency, Recurring Payments, Invoice Generation
-- [x] Phase 6 Priority 3: Split Payments, Escrow Services, Dispute Resolution
+This plan covers all outstanding items in parallel: billing with Flutterwave, payment sync between customers/merchants, transaction detail views, QR code detail views, customer-merchant relationship in advanced payments, and QR scanner production readiness.
 
 ---
 
-## Phase 5: Realtime Features (COMPLETED)
+### 1. Database Migration
 
-### Enabled Realtime On:
-- `transactions` table - Live transaction updates for merchants
-- `qr_codes` table - Real-time QR code management
-- `invoices` table - Live invoice status updates
-- `recurring_payments` table - Subscription status changes
-- `disputes` table - Dispute resolution updates
-- `escrow` table - Escrow status changes
+Add tables/columns needed:
 
-### New Hooks Created:
-- `useRealtimeQRCodes.ts` - Realtime QR code subscription
-- `useInvoices.ts` - Invoice management with realtime
-- `useRecurringPayments.ts` - Recurring payment management
-- `useCurrencyRates.ts` - Multi-currency support
-- `useDisputes.ts` - Dispute management
-- `useEscrow.ts` - Escrow transaction management
-- `useSplitPayments.ts` - Split payment distribution
+- **`subscriptions` table**: `id`, `user_id`, `merchant_id`, `plan_id` (text: basic/premium/enterprise), `status` (active/cancelled/past_due), `amount`, `currency`, `interval`, `current_period_start`, `current_period_end`, `flutterwave_tx_ref`, `created_at`, `updated_at`. RLS: users see own, admins see all.
+- **`billing_history` table**: `id`, `subscription_id`, `user_id`, `amount`, `currency`, `status`, `description`, `payment_reference`, `paid_at`, `created_at`. RLS: users see own, admins see all.
+- Add `customer_name` and `customer_email` columns to `recurring_payments`, `split_payments`, and `escrow` tables so merchants can tag which customer each item is for.
+- Enable realtime on `transactions` table (already done) and `subscriptions`.
 
----
+### 2. Subscription Billing with Flutterwave (`SubscriptionBilling.tsx`)
 
-## Phase 6: Advanced Features (COMPLETED)
+Replace hardcoded billing data with real database-backed subscriptions:
 
-### Priority 1 - Core Features:
-1. ✅ Complete QR Code Management System with realtime
-2. ✅ Enhanced merchant filtering and status toggling
-3. ✅ Admin Panel with Analytics and Settings pages
-4. ✅ Platform-wide transaction monitoring
+- Fetch current subscription from `subscriptions` table for the logged-in merchant.
+- Fetch billing history from `billing_history` table.
+- "Subscribe" / "Upgrade" buttons invoke the existing `flutterwave-nqr` edge function or a new `create-subscription-payment` edge function that initiates a Flutterwave Standard payment with the plan amount.
+- On payment callback/verification, insert into `subscriptions` and `billing_history`.
+- Show real usage stats by querying QR codes count, transactions count, etc.
 
-### Priority 2 - Growth Features:
-1. ✅ Multi-Currency Support
-   - Currency rates table with exchange rates
-   - Currency converter component
-   - Support for NGN, USD, EUR, GBP, GHS, KES
-   
-2. ✅ Recurring Payments
-   - Daily, weekly, monthly, quarterly, yearly intervals
-   - Pause/resume/cancel functionality
-   - Payment tracking and limits
-   
-3. ✅ Invoice Generation
-   - Multi-item invoices
-   - Tax and discount support
-   - Draft/Send/Paid workflow
-   - PDF-ready format
+### 3. Customer Transaction Detail View (`CustomerTransactions.tsx`)
 
-### Priority 3 - Advanced Features:
-1. ✅ Split Payments
-   - Multiple recipients
-   - Percentage-based splits
-   - Processing status tracking
-   
-2. ✅ Escrow Services
-   - Hold funds securely
-   - Release conditions
-   - Dispute mechanism
-   - Refund capability
-   
-3. ✅ Dispute Resolution Center
-   - File disputes with reasons
-   - Evidence attachment
-   - Admin review workflow
-   - Resolution tracking
+Replace mock data with real database queries:
 
----
+- Fetch transactions where `customer_id` matches the authenticated user's customer records.
+- Add a clickable detail dialog showing: amount, status, merchant name (join via `merchant_id`), payment method, reference, timestamp, and description.
+- Include merchant name resolution by joining `transactions.merchant_id` → `merchants.business_name`.
 
-## New Database Tables Created:
+### 4. QR Code Detail View for Merchants (`QRList.tsx`)
 
-| Table | Purpose | RLS |
-|-------|---------|-----|
-| invoices | Invoice management | Merchant-scoped |
-| recurring_payments | Subscription billing | Merchant-scoped |
-| split_payments | Payment distribution | Merchant-scoped |
-| escrow | Secure fund holding | Merchant-scoped |
-| disputes | Payment disputes | Merchant/Admin |
-| currency_rates | Exchange rates | Public read |
+Add a detail dialog when clicking a QR code in the list:
 
----
+- Show: QR code ID, type, amount, description, gateway, colors, creation date, scan/payment/revenue stats.
+- Render an actual QR code preview using the stored config (primary_color, pattern, etc.).
+- Include action buttons: copy link, download, edit (opens edit dialog), delete, toggle active/inactive status.
 
-## New Components Created:
+### 5. Customer-Merchant Relationship in Advanced Payments
 
-### Advanced Payments Module:
-- `src/components/payments/AdvancedPayments.tsx` - Main container
-- `src/components/invoices/InvoiceManager.tsx` - Invoice CRUD
-- `src/components/recurring/RecurringPaymentsManager.tsx` - Subscriptions
-- `src/components/splitpay/SplitPaymentsManager.tsx` - Payment splits
-- `src/components/escrow/EscrowManager.tsx` - Escrow transactions
-- `src/components/disputes/DisputesCenter.tsx` - Dispute resolution
-- `src/components/currency/CurrencyConverter.tsx` - Currency conversion
+Update `InvoiceManager`, `RecurringPaymentsManager`, `SplitPaymentsManager`, `EscrowManager`, and `DisputesCenter`:
 
-### Admin Panel Additions:
-- `src/pages/admin/PlatformAnalytics.tsx` - Charts and metrics
-- `src/pages/admin/SystemSettings.tsx` - Platform configuration
+- Add a customer selector/input in each create form. Fetch the merchant's customers from the `customers` table and show a dropdown + manual entry option.
+- For invoices: already has `recipient_name`/`recipient_email` — also link to `customer_id` via dropdown.
+- For recurring: add `customer_name`/`customer_email` fields to the form and persist to the new columns.
+- For split pay: add customer name field to each recipient row.
+- For escrow: add customer selector to the create form.
+- For disputes: show the customer name in the detail view.
+- In each list view, display the customer name alongside the item.
 
----
+### 6. Payment Sync Flow (Customer ↔ Merchant)
 
-## Architecture Overview:
+Create a real payment flow linking QR scan → transaction → merchant notification:
 
-```
-src/
-├── components/
-│   ├── payments/
-│   │   └── AdvancedPayments.tsx      # Tabbed container
-│   ├── invoices/
-│   │   └── InvoiceManager.tsx        # Invoice CRUD
-│   ├── recurring/
-│   │   └── RecurringPaymentsManager.tsx
-│   ├── splitpay/
-│   │   └── SplitPaymentsManager.tsx
-│   ├── escrow/
-│   │   └── EscrowManager.tsx
-│   ├── disputes/
-│   │   └── DisputesCenter.tsx
-│   └── currency/
-│       └── CurrencyConverter.tsx
-├── hooks/
-│   ├── useRealtimeQRCodes.ts
-│   ├── useInvoices.ts
-│   ├── useRecurringPayments.ts
-│   ├── useCurrencyRates.ts
-│   ├── useDisputes.ts
-│   ├── useEscrow.ts
-│   └── useSplitPayments.ts
-└── pages/admin/
-    ├── PlatformAnalytics.tsx
-    └── SystemSettings.tsx
-```
+- When a customer scans a QR code and pays (via NQR), create a `transaction` record with both `merchant_id` (from QR code) and `customer_id` (from logged-in customer).
+- Update the merchant's `total_revenue` and `total_transactions` via a database trigger or in the edge function.
+- Update the customer's `total_spent` and `total_transactions` similarly.
+- Both merchant and customer dashboards already use realtime subscriptions on `transactions`, so new payments appear live.
 
----
+### 7. QR Scanner Production Readiness
 
-## Future Enhancements (Priority 4 - Enterprise):
+Enhance `QRScanner.tsx`:
 
-1. White-Label Solutions
-2. Multi-Tenant Architecture
-3. Advanced Reporting Suite
-4. Compliance Dashboard
-5. Integration Hub (API Marketplace)
+- Add camera-based scanning using the browser's `MediaDevices` API + a lightweight JS QR decoder (implement inline without new dependency — use canvas-based decoding or the existing `BarcodeDetector` API where available).
+- Add scan animation overlay when camera is active.
+- Improve the payment flow: after scanning, if the QR code has a fixed amount, proceed directly; if variable, show amount input.
+- After payment initiation, create a real transaction record linking the customer to the merchant.
+- Show payment confirmation with receipt details.
 
----
+### 8. Admin Panel Sync
 
-## Testing Checklist:
+Ensure admin views reflect all new data:
 
-- [x] Admin panel accessible at /admin
-- [x] Admin routes: /admin/analytics, /admin/settings
-- [x] Merchant dashboard with realtime transactions
-- [x] QR code creation and management
-- [x] Invoice creation workflow
-- [x] Recurring payment setup
-- [x] Split payment configuration
-- [x] Escrow creation and release
-- [x] Dispute filing and resolution
-- [x] Currency conversion
+- `MerchantManagement`: show subscription status per merchant.
+- `CustomerManagement`: show total_spent, recent transactions.
+- `TransactionMonitor`: already fetches all transactions with admin RLS.
+- `SystemSettings`: already persists. Add subscription plan configuration section.
+
+### 9. Files to Create/Modify
+
+**New files:**
+- `supabase/functions/create-subscription-payment/index.ts` — Flutterwave payment initiation for subscriptions
+
+**Migration SQL:**
+- Create `subscriptions` and `billing_history` tables with RLS
+- Add `customer_name`, `customer_email` to `recurring_payments`, `split_payments`, `escrow`
+
+**Modified files:**
+- `src/components/subscription/SubscriptionBilling.tsx` — real data, Flutterwave checkout
+- `src/components/customer/CustomerTransactions.tsx` — real DB queries + detail dialog
+- `src/components/qr/QRList.tsx` — detail dialog for QR codes
+- `src/components/qr/QRHistory.tsx` — pass full QR data
+- `src/components/invoices/InvoiceManager.tsx` — customer dropdown selector
+- `src/components/recurring/RecurringPaymentsManager.tsx` — customer fields
+- `src/components/splitpay/SplitPaymentsManager.tsx` — customer fields
+- `src/components/escrow/EscrowManager.tsx` — customer selector
+- `src/components/disputes/DisputesCenter.tsx` — show customer info
+- `src/components/customer/QRScanner.tsx` — camera scanning + real transaction creation
+- `src/components/payments/AdvancedPayments.tsx` — no structural changes needed
+- `src/pages/admin/MerchantManagement.tsx` — subscription column
+- `src/hooks/useSplitPayments.ts` — include customer fields
+- `src/hooks/useRecurringPayments.ts` — include customer fields
+- `src/hooks/useEscrow.ts` — include customer fields
+
